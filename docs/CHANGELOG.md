@@ -2,6 +2,12 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 3 – Staff, accounts, assignments, homeroom
+- Added: `supabase/migrations/005_step3_staff.sql`, `src/pages/staff/` (StaffLayout, StaffListPage, StaffFormPage, AssignmentsPage, DepartmentsPage)
+- Edited: `src/App.jsx`, `src/lib/roles.js`, `src/lib/ui.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `005_step3_staff.sql` (once, after 001-004)
+
 ## Update 3 – Working rules
 - Added: `docs/CHANGELOG.md`
 - Edited: `docs/BLUEPRINT.md` (added section 9, "Working rules")

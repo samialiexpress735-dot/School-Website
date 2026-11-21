@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security) and 2 (school structure) are done. Step 3 is next.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. Step 4 (students) is next.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
 
 ## 1. Goal and scope
@@ -47,9 +47,12 @@ Student and parent logins are added in a later phase. Every user sees only what 
 - **School calendar:** school days are **Monday to Friday**. Public holidays, exam days and breaks are stored per year; no attendance is taken on those days and they are never counted as absences. (Built in Step 2.)
 
 ### 4.2 Staff registration
-- Full name (English and Amharic), sex, date of birth, phone, email, address, photo
-- Employee ID, role, department, qualification, field of study, hire date, employment status
-- Login account linked to the staff record
+- Teaching and **non-teaching** staff (librarian, lab assistant, office and so on) are both registered. Non-teaching staff cannot be assigned to teach.
+- Full name (English and Amharic), sex, date of birth, phone, email, address
+- Employee ID (typed by the school), staff type, job position, department, qualification, field of study, hire date, employment status (active, on leave, transferred, resigned, retired)
+- **Photo:** the field exists, but uploading photos needs file storage and comes in a later update.
+- **Login accounts:** the account is created in Supabase (Authentication > Users). The **system administrator** then links it to the staff record in the app and sets the role. Only the system administrator can link accounts or change roles. Unlinking removes the person's access.
+- Each department has one unit leader, set on the Departments tab.
 
 ### 4.3 Student registration
 Every required field is validated before saving.
@@ -148,8 +151,8 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 0 | GitHub repo, Supabase project, project skeleton, EN/AM switch, login | Empty app that logs in | Done |
 | 1 | Database tables, roles and security rules | Secure database | Done |
 | 2 | Academic years, school calendar (Mon-Fri, holidays), grades, **shifts**, sections, subjects | School structure ready | Done |
-| 3 | Staff registration, teacher assignments, homeroom teachers | Staff ready | Next |
-| 4 | Student registration and yearly enrollment | Students ready | |
+| 3 | Staff registration, teacher assignments, homeroom teachers | Staff ready | Done |
+| 4 | Student registration and yearly enrollment | Students ready | Next |
 | 5 | Marks entry and calculations | Marks ready | |
 | 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | |
 | 7 | Reports, report cards, promotion | Year-end ready | |
@@ -168,6 +171,10 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 - Teachers may edit attendance for the last 3 school days only.
 - Absence threshold is a number, default 5, changeable by the homeroom teacher for their section.
 - **Unit leaders cannot assign teachers.** Only the system admin, director and vice director can.
+- Non-teaching staff are registered too. All teachers have email addresses.
+- Accounts are created in Supabase and linked to staff by the system administrator (simple method; email invites may come later).
+- Homeroom teachers and teacher assignments are set only by the system admin, director and vice director, and only for active teaching staff.
+- A teacher with more than 25 periods per week is flagged. The number can be changed on the assignments page.
 
 ## 8. Still needed from you
 
