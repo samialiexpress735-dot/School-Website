@@ -2,6 +2,13 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI foundation (before Step 4)
+- Added: nothing
+- Edited: `src/styles.css`, `src/components/Shell.jsx`, `src/components/Protected.jsx`, `src/lib/ui.jsx`, `src/pages/DashboardPage.jsx`, `src/pages/LoginPage.jsx`, `src/pages/structure/` (YearsPage, CalendarPage, SubjectsPage, SectionsPage), `src/pages/staff/` (StaffListPage, StaffFormPage, DepartmentsPage, AssignmentsPage), `index.html`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: nothing
+- What changed: new working color palette and animations from blueprint section 10; no database, login or logic changes. Pages only swap the plain "Loading..." line for the new `Loading` placeholder.
+
 ## Step 3 – Staff, accounts, assignments, homeroom
 - Added: `supabase/migrations/005_step3_staff.sql`, `src/pages/staff/` (StaffLayout, StaffListPage, StaffFormPage, AssignmentsPage, DepartmentsPage)
 - Edited: `src/App.jsx`, `src/lib/roles.js`, `src/lib/ui.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

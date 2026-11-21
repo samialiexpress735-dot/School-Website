@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
 import { can, SECTION_EDITORS } from "../../lib/roles.js";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -40,7 +40,7 @@ export default function SectionsPage() {
     [yearId]
   );
 
-  if (ref.loading) return <p>{t("common.loading")}</p>;
+  if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
 
   const { years, grades, streams } = ref.data;
@@ -136,7 +136,7 @@ export default function SectionsPage() {
         </form>
       )}
 
-      {sections.error ? <LoadError /> : sections.loading ? <p>{t("common.loading")}</p> : sorted.length === 0 ? <p>{t("common.noData")}</p> : (
+      {sections.error ? <LoadError /> : sections.loading ? <Loading /> : sorted.length === 0 ? <p>{t("common.noData")}</p> : (
         <div className="tablewrap">
           <table>
             <thead>

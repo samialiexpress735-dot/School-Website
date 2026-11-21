@@ -66,7 +66,7 @@ export default function LoginPage() {
               </p>
             )}
 
-            <button type="submit" className="btn" disabled={busy || !email || !password}>
+            <button type="submit" className="btn" disabled={busy || !email || !password} aria-busy={busy}>
               {busy ? t("login.submitting") : t("login.submit")}
             </button>
           </form>

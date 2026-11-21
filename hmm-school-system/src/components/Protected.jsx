@@ -2,13 +2,14 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useLang } from "../i18n/index.jsx";
 import Shell from "./Shell.jsx";
+import { Loading } from "../lib/ui.jsx";
 
 // Wraps every page that needs a signed-in user with a role.
 export default function Protected({ children }) {
   const { lang, t } = useLang();
   const { session, profile, loading } = useAuth();
 
-  if (loading) return <p className="center-msg">{t("common.loading")}</p>;
+  if (loading) return <div className="content"><Loading /></div>;
   if (!session) return <Navigate to={`/${lang}/login`} replace />;
 
   const hasAccess = Boolean(profile?.role && profile?.is_active);

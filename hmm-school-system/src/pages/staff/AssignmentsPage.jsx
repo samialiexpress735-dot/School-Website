@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, fullName } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
 import { can, ASSIGNERS } from "../../lib/roles.js";
 
 const sameStream = (a, b) => (a || null) === (b || null);
@@ -48,7 +48,7 @@ export default function AssignmentsPage() {
     return s.error ? s : a.error ? a : { data: { sections: s.data, assignments: a.data } };
   }, [yearId]);
 
-  if (ref.loading) return <p>{t("common.loading")}</p>;
+  if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
   const { years, grades, streams, subjects, gradeSubjects, teachers, max } = ref.data;
 
@@ -162,7 +162,7 @@ export default function AssignmentsPage() {
         </div>
       </div>
 
-      {yd.error ? <LoadError /> : yd.loading ? <p>{t("common.loading")}</p> : !section ? <p>{t("assignments.noSections")}</p> : (
+      {yd.error ? <LoadError /> : yd.loading ? <Loading /> : !section ? <p>{t("assignments.noSections")}</p> : (
         <section className="panel">
           <h2>{sectionLabel(section)}</h2>
           <p className="muted small">{t("assignments.inactiveNote")}</p>

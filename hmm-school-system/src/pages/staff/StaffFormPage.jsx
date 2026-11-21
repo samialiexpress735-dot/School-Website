@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, fullName } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS, ALL_ROLES } from "../../lib/roles.js";
 
 const EMPTY = {
@@ -177,7 +177,7 @@ export default function StaffFormPage() {
     else record.reload();
   }
 
-  if (!isNew && record.loading) return <p>{t("common.loading")}</p>;
+  if (!isNew && record.loading) return <Loading />;
   if (record.error || departments.error) return <LoadError />;
   if (!isNew && !record.data && !record.loading) return <p>{t("common.noData")}</p>;
 

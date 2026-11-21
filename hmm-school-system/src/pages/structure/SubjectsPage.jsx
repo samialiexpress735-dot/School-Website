@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 
 function SubjectRow({ subject, editable, onDone, notice }) {
@@ -73,7 +73,7 @@ function GradeSubjects({ subjects, editable, notice }) {
     error ? notice.fail(error) : notice.ok();
   }
 
-  if (ref.loading) return <p>{t("common.loading")}</p>;
+  if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
 
   return (
@@ -97,7 +97,7 @@ function GradeSubjects({ subjects, editable, notice }) {
         )}
       </div>
 
-      {subjects.length === 0 ? <p>{t("subjects.noneActive")}</p> : links.loading ? <p>{t("common.loading")}</p> : links.error ? <LoadError /> : (
+      {subjects.length === 0 ? <p>{t("subjects.noneActive")}</p> : links.loading ? <Loading /> : links.error ? <LoadError /> : (
         <div className="tablewrap">
           <table>
             <thead><tr><th>{t("subjects.taught")}</th><th>{t("common.name")}</th><th>{t("subjects.periods")}</th></tr></thead>
@@ -146,7 +146,7 @@ export default function SubjectsPage() {
     subjects.reload();
   }
 
-  if (subjects.loading) return <p>{t("common.loading")}</p>;
+  if (subjects.loading) return <Loading />;
   if (subjects.error) return <LoadError />;
 
   return (

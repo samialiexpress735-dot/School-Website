@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useLang } from "../i18n/index.jsx";
 import LangSwitch from "./LangSwitch.jsx";
@@ -6,6 +6,10 @@ import LangSwitch from "./LangSwitch.jsx";
 export default function Shell({ children, showNav }) {
   const { lang, t } = useLang();
   const { signOut } = useAuth();
+  // The page fades in when the screen changes. The language part of the address is left out of the key,
+  // so switching language does not reset a form that is half filled in.
+  const { pathname } = useLocation();
+  const pageKey = pathname.split("/").slice(2).join("/");
   return (
     <div className="shell">
       <header className="topbar">
@@ -27,7 +31,9 @@ export default function Shell({ children, showNav }) {
           <NavLink to={`/${lang}/staff`}>{t("nav.staff")}</NavLink>
         </nav>
       )}
-      <main className="content">{children}</main>
+      <main className="content page-enter" key={pageKey}>
+        {children}
+      </main>
     </div>
   );
 }

@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. Step 4 (students) is next.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. Step 4 (students) is next.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
 
@@ -315,7 +315,7 @@ Motion is used to explain what happened, never for show. It is **CSS only** (no 
 |---|---|---|
 | Login page | Gold margin line draws down the ruled page; the ruled lines fade in; the school name rises gently; the form fades in | Memorable first impression, quick (under 1 second) |
 | Page change | Short fade and 8 px upward slide of the content | Shows the page changed without a jarring jump |
-| Main nav and tabs | The gold underline (or tab pill) slides to the new item | Shows where you are |
+| Main nav and tabs | The gold underline grows in under the active item; tab pills change color smoothly | Shows where you are |
 | Dashboard cards | Staggered fade-in on load; slight lift and shadow on hover or focus | Feels alive, shows what is clickable |
 | Buttons | Soft press effect and color change on hover; small spinner inside the button while saving | Immediate feedback |
 | Flash messages | Slide in from the top, fade out after a few seconds (errors stay until dismissed) | Confirms saves and errors without blocking |
@@ -325,7 +325,7 @@ Motion is used to explain what happened, never for show. It is **CSS only** (no 
 | Section allocation board | Student card glides to its new column and the counts animate to their new values; a gentle pulse on a column that becomes unbalanced | Makes moves understandable and reversible |
 | Attendance toggles | Smooth color change between present, absent, late, excused; the absence counter nudges when it changes; a pulse when a student reaches the threshold | Fast, satisfying roll call and a clear alert |
 | Marks grid | A cell flashes terracotta if a mark exceeds its maximum; totals count up or down to the new value | Instant correction |
-| Language switch | Quick cross-fade of text when switching English and Amharic | Avoids a flash of mixed text |
+| Language switch | Quick cross-fade of text when switching English and Amharic (deferred; the page is kept in place on a language switch so a half-filled form is never reset) | Avoids a flash of mixed text |
 | Dialogs and menus | Fade and scale from 96 to 100 percent | Soft focus change |
 
 Rules for motion: nothing loops forever; nothing moves while a person is typing; no animation delays a task; sound is not used.
@@ -342,6 +342,6 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 
 ### 10.8 How and when it is applied
 - The UI plan is implemented in small, reviewable updates; no database changes are needed for it.
-- **UI foundation update (proposed):** design tokens and palette, shared button, panel and table styles, page and tab transitions, flash messages, skeleton loading, the refreshed login and dashboard. This is only `src/styles.css` and a few components, and it can come **before Step 4** or **together with Step 4**. The choice is left to the project owner.
-- Each later step then adds its own screens and animations from 10.5 and 10.6 as it is built.
+- **UI foundation update (done, before Step 4):** design tokens and the working palette; shared button, panel, table, pill and message styles; page fade-in on every screen change; the animated login page (gold margin line draws down, ruled lines and text fade in); the dashboard welcome banner with today's date in both calendars and staggered module cards; sliding-in navigation underline; flash messages that slide in and "Saved." messages that fade away by themselves; skeleton loading placeholders instead of a plain "Loading..." line; button spinner support (`aria-busy`); the new favicon colors. It touches `src/styles.css` and a few shared components and pages only.
+- **Still to come, with the step that needs it:** highlight of a just-saved row, language cross-fade, dialogs and menus, the registration steps and progress bar (Step 4), the section allocation board (Step 4), attendance toggles and threshold pulse (Step 6), marks grid feedback and counting totals (Step 5), the left sidebar (after Step 6), stat tiles on the dashboard (as each step provides data).
 - A future logo or official colors replace the palette by editing the tokens in 10.2; nothing else changes.

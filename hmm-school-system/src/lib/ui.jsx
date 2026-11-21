@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useLang } from "../i18n/index.jsx";
 
 // Runs a Supabase query and gives back { data, error, loading, reload }.
@@ -25,15 +25,28 @@ export function useQuery(fn, deps = []) {
 }
 
 // Small "Saved." / error message shown above a form.
+// A "Saved." message fades away by itself after a few seconds; errors stay until cleared.
 export function useNotice() {
   const { t } = useLang();
   const [notice, setNotice] = useState(null);
-  const ok = useCallback(() => setNotice({ type: "ok", text: t("common.saved") }), [t]);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const ok = useCallback(() => {
+    clearTimeout(timer.current);
+    setNotice({ type: "ok", text: t("common.saved") });
+    timer.current = setTimeout(() => setNotice(null), 5000);
+  }, [t]);
   const fail = useCallback(
-    (err, custom) => setNotice({ type: "error", text: custom || t("common.saveFailed", { detail: err?.message || "" }) }),
+    (err, custom) => {
+      clearTimeout(timer.current);
+      setNotice({ type: "error", text: custom || t("common.saveFailed", { detail: err?.message || "" }) });
+    },
     [t]
   );
-  const clear = useCallback(() => setNotice(null), []);
+  const clear = useCallback(() => {
+    clearTimeout(timer.current);
+    setNotice(null);
+  }, []);
   return { notice, ok, fail, clear, setNotice };
 }
 
@@ -43,6 +56,19 @@ export function Notice({ notice }) {
     <p className={notice.type === "ok" ? "flash ok" : "flash error"} role={notice.type === "ok" ? "status" : "alert"}>
       {notice.text}
     </p>
+  );
+}
+
+// Calm placeholder bars shown while data loads (replaces a plain "Loading…" line).
+export function Loading() {
+  const { t } = useLang();
+  return (
+    <div className="skeleton" role="status" aria-live="polite">
+      <span className="sr-only">{t("common.loading")}</span>
+      <div className="sk-line w60" />
+      <div className="sk-line" />
+      <div className="sk-line w80" />
+    </div>
   );
 }
 

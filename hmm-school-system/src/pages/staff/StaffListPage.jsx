@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, LoadError, fullName, pick } from "../../lib/ui.jsx";
+import { useQuery, LoadError, fullName, pick, Loading } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS } from "../../lib/roles.js";
 
 export default function StaffListPage() {
@@ -19,7 +19,7 @@ export default function StaffListPage() {
     []
   );
 
-  if (loading) return <p>{t("common.loading")}</p>;
+  if (loading) return <Loading />;
   if (error) return <LoadError />;
 
   const q = search.trim().toLowerCase();

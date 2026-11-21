@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 import EcDate from "../../components/EcDate.jsx";
 
@@ -63,7 +63,7 @@ export default function CalendarPage() {
     error ? notice.fail(error) : (notice.ok(), days.reload());
   }
 
-  if (years.loading) return <p>{t("common.loading")}</p>;
+  if (years.loading) return <Loading />;
   if (years.error) return <LoadError />;
 
   return (
@@ -111,7 +111,7 @@ export default function CalendarPage() {
         </form>
       )}
 
-      {days.error ? <LoadError /> : days.loading ? <p>{t("common.loading")}</p> : days.data.length === 0 ? (
+      {days.error ? <LoadError /> : days.loading ? <Loading /> : days.data.length === 0 ? (
         <p>{t("calendar.none")}</p>
       ) : (
         <div className="tablewrap">

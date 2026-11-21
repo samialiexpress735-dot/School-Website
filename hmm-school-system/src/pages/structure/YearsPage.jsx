@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, Loading } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 import EcDate from "../../components/EcDate.jsx";
 
@@ -99,7 +99,7 @@ export default function YearsPage() {
     run(supabase.from("academic_years").update({ is_closed: !y.is_closed }).eq("id", y.id));
   };
 
-  if (loading) return <p>{t("common.loading")}</p>;
+  if (loading) return <Loading />;
   if (error) return <LoadError />;
 
   return (
