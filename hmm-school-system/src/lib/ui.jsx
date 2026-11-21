@@ -58,3 +58,11 @@ export function LoadError() {
 // Shows the Amharic name when the page is in Amharic and one exists.
 export const pick = (row, lang, field = "name") =>
   (lang === "am" && row?.[`${field}_am`]) || row?.[field] || "";
+
+// "First Father Grandfather", in Amharic when the page is Amharic and the Amharic names exist.
+export function fullName(row, lang) {
+  if (!row) return "";
+  const am = [row.first_name_am, row.father_name_am, row.grandfather_name_am].filter(Boolean).join(" ");
+  const en = [row.first_name, row.father_name, row.grandfather_name].filter(Boolean).join(" ");
+  return lang === "am" && am ? am : en;
+}

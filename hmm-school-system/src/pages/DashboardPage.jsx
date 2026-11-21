@@ -5,7 +5,7 @@ import { useLang } from "../i18n/index.jsx";
 // "to" turns a module into a link once its step is built.
 const MODULES = [
   { key: "structure", step: 2, to: "structure" },
-  { key: "staff", step: 3 },
+  { key: "staff", step: 3, to: "staff" },
   { key: "students", step: 4 },
   { key: "marks", step: 5 },
   { key: "attendance", step: 6 },

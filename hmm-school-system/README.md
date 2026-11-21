@@ -5,21 +5,22 @@
 Bilingual (English default, Amharic) school administration system.
 The full plan is in **`docs/BLUEPRINT.md`**.
 
-## What is in this version (Steps 0, 1 and 2)
+## What is in this version (Steps 0 to 3)
 
 | Step | Status | What |
 |---|---|---|
 | 0 | Done | App skeleton, English/Amharic switch (`#/en/...`, `#/am/...`), login, dashboard |
 | 1 | Done | Database tables, roles and security rules, starting data |
 | 2 | Done | Academic years and semesters, school calendar (Mon-Fri, holidays), subjects and subjects per grade, sections with morning/afternoon shifts |
-| 3 | Next | Staff registration, teacher assignments, homeroom teachers |
+| 3 | Done | Staff (teaching and non-teaching), login account linking, departments, teacher assignments, homeroom teachers, workload |
+| 4 | Next | Student registration and yearly enrollment |
 
 Staff and student screens come in later steps.
 
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001`, `002`, `003`, `004`
+- `supabase/migrations/` – database files, run in order: `001` to `005`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -32,7 +33,7 @@ Staff and student screens come in later steps.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):
@@ -59,8 +60,12 @@ Open the address it prints. Sign in with the account from step 2.
 
 To make the files for a website host, run `npm run build`; the `dist` folder is the website.
 
-## Updating from the earlier zip (Step 1 to Step 2)
-If you already ran 001, 002 and 003, run only `004_step2_structure.sql` in the SQL Editor, then replace the project files with the new ones.
+## Updating
+Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expand them into the project folder, then run only the new SQL file named in the changelog.
+
+## Giving staff a login
+1. In Supabase open **Authentication > Users > Add user**, enter the person's email and a password, and tick auto-confirm.
+2. In the app sign in as the system administrator, open **Staff**, open the person's record, and in **Login account** choose their email, pick a role and click **Link account**.
 
 ## How security works
 - No role means no access. A new account can sign in but sees nothing until the system administrator gives it a role.

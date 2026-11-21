@@ -24,6 +24,7 @@ export default function Shell({ children, showNav }) {
         <nav className="mainnav" aria-label="Main">
           <NavLink to={`/${lang}/dashboard`}>{t("nav.dashboard")}</NavLink>
           <NavLink to={`/${lang}/structure`}>{t("nav.structure")}</NavLink>
+          <NavLink to={`/${lang}/staff`}>{t("nav.staff")}</NavLink>
         </nav>
       )}
       <main className="content">{children}</main>
