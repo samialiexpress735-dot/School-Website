@@ -5,7 +5,7 @@
 Version 1 · Phase 1: School Administration System
 
 **Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. Step 4 (students) is next.
-**Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and school branding are undecided (TBD). No application code or database changed in this revision.
+**Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
 
 ## 1. Goal and scope
@@ -231,7 +231,7 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 - Students are registered once and enrolled every academic year; Grades 11 and 12 store the stream on each year's enrollment.
 - No fixed maximum number of sections; allocation proposes a balanced split that the Registrar reviews and adjusts.
 - The absence threshold is 5 absences per semester, and stays configurable.
-- Hosting is undecided (TBD). School branding and colors are undecided.
+- Hosting is undecided (TBD). The school's final branding (logo, official colors) is undecided; until then the working UI palette and animation plan in section 10 is used.
 
 ## 8. Still needed from you
 
@@ -240,7 +240,7 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 3. The real mark structure for each subject (components, maximums, weights, any conversion or scaling, rounding) and the pass mark. The engine in 4.6 is configurable, so this is entered as data, not decided in code.
 4. The school's balance rules for sections (target or maximum students per section, if any). There is no fixed number of sections.
 5. Student ID format the school uses, if any. No format is defined in this blueprint yet, and none is assumed.
-6. School logo and colors: **undecided**. The existing deep blue and gold in the app is a temporary design direction only, not a branding decision.
+6. School logo and official colors: **undecided**. There is no logo yet. Section 10 proposes a working UI palette so the system looks good now; it is not a branding decision and can be replaced later by changing a few color values. Please say if the school already has official colors or a logo to use instead.
 7. Who will be the first System Admin?
 8. Absence rule: decided as 5 absences per semester. Still to confirm: do excused and late marks stay uncounted (assumed)?
 
@@ -253,3 +253,95 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 5. **Before each step starts, Claude asks the questions it needs** and states its assumptions, so you can correct them before anything is built.
 6. **When a step changes the plan**, the blueprint is edited in that same update.
 7. **Testing:** SQL changes are tested on a local PostgreSQL before they are sent, and the app is built to check for errors. Screens are tested by you in the browser, and problems are fixed in the next update.
+
+## 10. User interface plan
+
+This section is the plan for how the system looks and feels. It is a **working design direction**, not final school branding. The school has no logo yet, so the interface gets its identity from color, typography and motion. Everything is built from design tokens (CSS variables), so a future logo or official colors can be applied by changing a few values, without redesigning screens. No UI code is changed by this section; it is applied in a later update (timing in 10.8).
+
+### 10.1 Design goals
+1. **Calm, clear and trustworthy:** an office tool used daily by registrars, teachers and directors. Beauty comes from good color, spacing and gentle motion, not decoration.
+2. **Bilingual first:** English and Amharic look equally good. Amharic keeps looser line height and Noto Sans Ethiopic; layouts must not break with longer Amharic text.
+3. **Works on modest hardware:** old school computers, slow connections and phones. No heavy libraries; the app stays static files.
+4. **Fast to use:** the most frequent jobs (registering a student, daily roll call, entering marks) need the fewest clicks and large, forgiving controls.
+5. **Accessible:** readable contrast, visible keyboard focus, meaning never carried by color alone.
+
+### 10.2 Working color palette (proposed)
+Inspired by the Ethiopian highlands around Debre Birhan ("city of light"): deep highland blue, sunrise gold, a fresh teal and warm earth tones. All text and button pairs below were checked for at least 4.5:1 contrast (WCAG AA).
+
+| Token | Color | Used for |
+|---|---|---|
+| Highland Indigo | `#0f2e4d` | Top bar, headings, primary buttons |
+| Sunrise Gold | `#f6c453` | Accent line, active marker, highlights (text on gold is Indigo) |
+| Deep Gold (text) | `#7a5300` | Gold-colored text and Ethiopian dates on light backgrounds |
+| Meadow Teal | `#0b7a75` | Links, secondary actions, focus of attention |
+| Forest | `#1f6b4a` | Present, success, approved |
+| Terracotta | `#b8432f` | Absent, errors, danger, warnings |
+| Sky Blue | `#2a5d9f` | Excused, information |
+| Page | `#f5f7fa` | Page background |
+| Warm Cream | `#fbf6ea` | Soft highlighted panels, empty states |
+| Text / Muted / Line | `#1b2733` / `#566677` / `#d9e0e8` | Body text, secondary text, borders |
+
+- **Signature gradient:** Indigo to a deep teal (about `#0f2e4d` to `#0b5d63`) for the login panel, the dashboard welcome banner and empty-state art, always with white text.
+- **Status colors** (attendance and records) always come with a word or icon as well as the color: present, absent, late, excused; active, on leave, withdrawn.
+- Pale tints of the status colors are used as backgrounds (for example a pale terracotta row for a student at the absence threshold).
+- Dark mode is **not** planned for Phase 1.
+
+### 10.3 Typography and spacing
+- Fonts stay bundled: Atkinson Hyperlegible for English, Noto Sans Ethiopic for Amharic.
+- One type scale (small, body, large, heading, page title) and one spacing scale (4, 8, 12, 16, 24, 32, 48 px) used everywhere.
+- Rounded corners of 6 to 10 px, soft shadows only on raised things (cards, menus, dialogs), 1 px lines elsewhere.
+- Large touch targets (at least 44 px) for buttons, attendance toggles and mark cells.
+
+### 10.4 Layout
+- **Now:** top bar with gold underline, main navigation row, sub-tabs per module, content in panels.
+- **Planned:** a left sidebar on desktop once there are more than about six modules (after Step 6); it collapses to a menu button on phones. A breadcrumb line shows where the person is.
+- **Dashboard:** a welcome banner (signature gradient) with the person's name, role and today's date in both calendars, then module cards. Cards for later steps show a quiet "Soon" badge. Summary figures (students, staff, sections) appear as small stat tiles as each step makes them available.
+- **Empty states:** a short friendly message on warm cream with one clear action (for example "No students yet. Register the first student").
+- **Loading:** skeleton placeholders shaped like the content, not spinners alone.
+- **Dates:** Ethiopian date first, standard date beside it in small deep-gold text, as built today.
+
+### 10.5 Key screens planned (for Steps 4 to 7)
+- **Student list:** search, filters (year, grade, section, stream, status), table that becomes cards on phones.
+- **Student registration:** a step-by-step form with a visible progress bar: 1 Student, 2 Address and contact, 3 Guardians, 4 Previous education, 5 Other and documents, 6 Review. Each step validates before moving on; progress is not lost when moving back; the review step lists every field before saving.
+- **Yearly enrollment and stream allocation:** pick year and grade, choose Natural or Social Science for Grades 11 and 12, with the student's earlier enrollments shown beside it as a timeline.
+- **Section allocation board:** one column per section showing its count and balance (for example sex split), student cards that can be moved between columns by drag **and** by a "Move to..." button or keyboard, a "Propose allocation" action, and a clear Approve step. Numbers update live as students move.
+- **Daily roll call (Step 6):** everyone starts as present; large toggles cycle present, absent, late, excused; a running count of absences; students at or above the absence threshold are marked clearly.
+- **Marks entry (Step 5):** a spreadsheet-like grid following the subject's configured assessment structure, with running totals, a visible maximum per column, and instant red feedback if a mark exceeds its maximum.
+
+### 10.6 Animation plan
+Motion is used to explain what happened, never for show. It is **CSS only** (no animation library) and uses only `transform` and `opacity`, so it stays smooth on old computers. Typical duration is 150 to 250 ms with gentle easing. Everything respects the user's "reduce motion" setting (animations are switched off; this is already in the stylesheet).
+
+| Where | Animation | Purpose |
+|---|---|---|
+| Login page | Gold margin line draws down the ruled page; the ruled lines fade in; the school name rises gently; the form fades in | Memorable first impression, quick (under 1 second) |
+| Page change | Short fade and 8 px upward slide of the content | Shows the page changed without a jarring jump |
+| Main nav and tabs | The gold underline (or tab pill) slides to the new item | Shows where you are |
+| Dashboard cards | Staggered fade-in on load; slight lift and shadow on hover or focus | Feels alive, shows what is clickable |
+| Buttons | Soft press effect and color change on hover; small spinner inside the button while saving | Immediate feedback |
+| Flash messages | Slide in from the top, fade out after a few seconds (errors stay until dismissed) | Confirms saves and errors without blocking |
+| Saved rows and records | Brief gold-to-transparent highlight on the row that was just added or changed | Shows exactly what changed |
+| Lists and tables | Rows fade in as data loads; skeleton shimmer while waiting | Calm loading |
+| Registration form steps | Progress bar fills; the next step slides in from the reading direction | Clear sense of progress |
+| Section allocation board | Student card glides to its new column and the counts animate to their new values; a gentle pulse on a column that becomes unbalanced | Makes moves understandable and reversible |
+| Attendance toggles | Smooth color change between present, absent, late, excused; the absence counter nudges when it changes; a pulse when a student reaches the threshold | Fast, satisfying roll call and a clear alert |
+| Marks grid | A cell flashes terracotta if a mark exceeds its maximum; totals count up or down to the new value | Instant correction |
+| Language switch | Quick cross-fade of text when switching English and Amharic | Avoids a flash of mixed text |
+| Dialogs and menus | Fade and scale from 96 to 100 percent | Soft focus change |
+
+Rules for motion: nothing loops forever; nothing moves while a person is typing; no animation delays a task; sound is not used.
+
+### 10.6.1 Reading direction
+Layouts use logical CSS properties (start and end instead of left and right) so any future change in direction or language does not need a redesign.
+
+### 10.7 Accessibility rules
+- Contrast of at least 4.5:1 for normal text and 3:1 for large text and control borders.
+- Visible focus outline on every interactive element; everything usable by keyboard (including moving students between sections).
+- Color is never the only signal; status always has a word or icon.
+- Form fields always have visible labels; errors say what is wrong and how to fix it, in the chosen language.
+- Respect "reduce motion".
+
+### 10.8 How and when it is applied
+- The UI plan is implemented in small, reviewable updates; no database changes are needed for it.
+- **UI foundation update (proposed):** design tokens and palette, shared button, panel and table styles, page and tab transitions, flash messages, skeleton loading, the refreshed login and dashboard. This is only `src/styles.css` and a few components, and it can come **before Step 4** or **together with Step 4**. The choice is left to the project owner.
+- Each later step then adds its own screens and animations from 10.5 and 10.6 as it is built.
+- A future logo or official colors replace the palette by editing the tokens in 10.2; nothing else changes.
