@@ -52,10 +52,12 @@ export default function AssignmentsPage() {
   if (ref.error) return <LoadError />;
   const { years, grades, streams, subjects, gradeSubjects, teachers, max } = ref.data;
 
+  // The subject list of each grade is kept per academic year.
+  const yearSubjects = gradeSubjects.filter((gs) => gs.academic_year_id === yearId);
   const sections = [...(yd.data?.sections || [])].sort((a, b) => {
     const ga = grades.find((g) => g.id === a.grade_id)?.number || 0;
     const gb = grades.find((g) => g.id === b.grade_id)?.number || 0;
-    return ga - gb || a.shift.localeCompare(b.shift) || a.name.localeCompare(b.name);
+    return ga - gb || a.shift.localeCompare(b.shift) || a.name.length - b.name.length || a.name.localeCompare(b.name);
   });
   const assignments = yd.data?.assignments || [];
   const section = sections.find((s) => s.id === sectionId) || sections[0];
@@ -63,7 +65,7 @@ export default function AssignmentsPage() {
     `${pick(grades.find((g) => g.id === s.grade_id), lang)} · ${pick(streams.find((x) => x.id === s.stream_id), lang)} · ${t(`sections.shifts.${s.shift}`)} · ${s.name}`;
 
   const periodsFor = (sec, subjectId) =>
-    gradeSubjects.find((gs) => gs.grade_id === sec.grade_id && sameStream(gs.stream_id, sec.stream_id) && gs.subject_id === subjectId)?.periods_per_week || 0;
+    yearSubjects.find((gs) => gs.grade_id === sec.grade_id && sameStream(gs.stream_id, sec.stream_id) && gs.subject_id === subjectId)?.periods_per_week || 0;
 
   async function setTeacher(subjectId, staffId) {
     const existing = assignments.find((a) => a.section_id === section.id && a.subject_id === subjectId);
@@ -136,8 +138,9 @@ export default function AssignmentsPage() {
     .sort((a, b) => b.periods - a.periods);
 
   const sectionSubjects = section
-    ? gradeSubjects.filter((gs) => gs.grade_id === section.grade_id && sameStream(gs.stream_id, section.stream_id))
-        .map((gs) => ({ gs, subject: subjects.find((s) => s.id === gs.subject_id) })).filter((x) => x.subject)
+    ? yearSubjects.filter((gs) => gs.grade_id === section.grade_id && sameStream(gs.stream_id, section.stream_id))
+        .map((gs) => ({ gs, subject: subjects.find((s) => s.id === gs.subject_id) }))
+        .filter((x) => x.subject && (x.subject.is_active || assignments.some((a) => a.section_id === section.id && a.subject_id === x.subject.id)))
     : [];
   const homeroomElsewhere = (staffId) => staffId && sections.some((s) => s.id !== section?.id && s.homeroom_staff_id === staffId);
 

@@ -2,10 +2,23 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
 import { can, SECTION_EDITORS } from "../../lib/roles.js";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// 0 -> A, 25 -> Z, 26 -> AA, 27 -> AB ... so there is no fixed limit on the number of sections.
+function sectionName(index) {
+  let n = index;
+  let out = "";
+  do {
+    out = LETTERS[n % 26] + out;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return out;
+}
+const byName = (a, b) => a.name.length - b.name.length || a.name.localeCompare(b.name);
+const MANY = 30; // only a "did you mean this?" question above this number, never a limit
 
 export default function SectionsPage() {
   const { t, lang } = useLang();
@@ -17,18 +30,18 @@ export default function SectionsPage() {
   const [streamId, setStreamId] = useState("");
   const [shift, setShift] = useState("morning");
   const [count, setCount] = useState(1);
-  const [capacity, setCapacity] = useState(50);
+  const [capacity, setCapacity] = useState("");
 
   const ref = useQuery(async () => {
-    const [y, g, s] = await Promise.all([
+    const [y, g, s, st] = await Promise.all([
       supabase.from("academic_years").select("id,label,is_current,year_ec").order("year_ec", { ascending: false }),
       supabase.from("grades").select("*").order("number"),
       supabase.from("streams").select("*").order("code"),
+      supabase.from("staff").select("id,first_name,father_name,grandfather_name,first_name_am,father_name_am,grandfather_name_am"),
     ]);
-    if (y.error) return y;
-    if (g.error) return g;
-    if (s.error) return s;
-    return { data: { years: y.data, grades: g.data, streams: s.data } };
+    const bad = [y, g, s, st].find((r) => r.error);
+    if (bad) return bad;
+    return { data: { years: y.data, grades: g.data, streams: s.data, staff: st.data } };
   }, []);
 
   useEffect(() => {
@@ -43,7 +56,7 @@ export default function SectionsPage() {
   if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
 
-  const { years, grades, streams } = ref.data;
+  const { years, grades, streams, staff } = ref.data;
   const grade = grades.find((g) => g.id === gradeId) || grades[0];
   const streamOptions = grade ? streams.filter((s) => (grade.number <= 10 ? s.code === "general" : s.code !== "general")) : [];
   const stream = streamOptions.find((s) => s.id === streamId) || streamOptions[0];
@@ -52,14 +65,15 @@ export default function SectionsPage() {
     e.preventDefault();
     notice.clear();
     const n = Number(count);
-    if (!Number.isInteger(n) || n < 1 || n > 12) return notice.fail(null, t("sections.invalidCount"));
+    if (!Number.isInteger(n) || n < 1) return notice.fail(null, t("sections.invalidCount"));
+    if (n > MANY && !window.confirm(t("sections.manyConfirm", { n }))) return;
     const used = new Set(
       (sections.data || []).filter((s) => s.grade_id === grade.id && s.stream_id === stream.id && s.shift === shift).map((s) => s.name)
     );
     const names = [];
-    for (const letter of LETTERS) {
-      if (!used.has(letter)) names.push(letter);
-      if (names.length === n) break;
+    for (let i = 0; names.length < n; i += 1) {
+      const name = sectionName(i);
+      if (!used.has(name)) names.push(name);
     }
     const rows = names.map((name) => ({
       academic_year_id: yearId, grade_id: grade.id, stream_id: stream.id, shift, name, capacity: Number(capacity) || null,
@@ -85,7 +99,7 @@ export default function SectionsPage() {
 
   const gradeNo = (id) => grades.find((g) => g.id === id)?.number ?? 0;
   const sorted = [...(sections.data || [])].sort(
-    (a, b) => gradeNo(a.grade_id) - gradeNo(b.grade_id) || (a.stream_id || "").localeCompare(b.stream_id || "") || a.shift.localeCompare(b.shift) || a.name.localeCompare(b.name)
+    (a, b) => gradeNo(a.grade_id) - gradeNo(b.grade_id) || (a.stream_id || "").localeCompare(b.stream_id || "") || a.shift.localeCompare(b.shift) || byName(a, b)
   );
 
   return (
@@ -125,10 +139,10 @@ export default function SectionsPage() {
           </div>
           <div>
             <label htmlFor="sc">{t("sections.count")}</label>
-            <input id="sc" type="number" min="1" max="12" value={count} onChange={(e) => setCount(e.target.value)} />
+            <input id="sc" type="number" min="1" step="1" value={count} onChange={(e) => setCount(e.target.value)} />
           </div>
           <div>
-            <label htmlFor="scap">{t("sections.capacity")}</label>
+            <label htmlFor="scap">{t("sections.capacityOptional")}</label>
             <input id="scap" type="number" min="1" value={capacity} onChange={(e) => setCapacity(e.target.value)} />
           </div>
           <div className="formgrid-action"><button type="submit" className="btn-small">{t("common.add")}</button></div>
@@ -153,7 +167,7 @@ export default function SectionsPage() {
                   <td>{t(`sections.shifts.${s.shift}`)}</td>
                   <th scope="row">{s.name}</th>
                   <td><input type="number" min="1" className="narrow" aria-label={t("sections.capacity")} defaultValue={s.capacity ?? ""} disabled={!editable} onBlur={(e) => saveCapacity(s.id, e.target.value)} /></td>
-                  <td className="muted">{t("sections.homeroomPending")}</td>
+                  <td>{fullName(staff.find((x) => x.id === s.homeroom_staff_id), lang) || <span className="muted">—</span>}</td>
                   <td className="row-actions">{editable && <button type="button" className="btn-small danger" onClick={() => remove(s.id)}>{t("common.delete")}</button>}</td>
                 </tr>
               ))}
