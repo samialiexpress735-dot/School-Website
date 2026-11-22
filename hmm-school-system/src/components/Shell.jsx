@@ -29,6 +29,7 @@ export default function Shell({ children, showNav }) {
           <NavLink to={`/${lang}/dashboard`}>{t("nav.dashboard")}</NavLink>
           <NavLink to={`/${lang}/structure`}>{t("nav.structure")}</NavLink>
           <NavLink to={`/${lang}/staff`}>{t("nav.staff")}</NavLink>
+          <NavLink to={`/${lang}/students`}>{t("nav.students")}</NavLink>
         </nav>
       )}
       <main className="content page-enter" key={pageKey}>

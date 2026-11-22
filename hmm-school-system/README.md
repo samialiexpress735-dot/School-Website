@@ -5,7 +5,7 @@
 Bilingual (English default, Amharic) school administration system.
 The full plan is in **`docs/BLUEPRINT.md`**.
 
-## What is in this version (Steps 0 to 3)
+## What is in this version (Steps 0 to 4)
 
 | Step | Status | What |
 |---|---|---|
@@ -13,14 +13,15 @@ The full plan is in **`docs/BLUEPRINT.md`**.
 | 1 | Done | Database tables, roles and security rules, starting data |
 | 2 | Done | Academic years and semesters, school calendar (Mon-Fri, holidays), subjects and subjects per grade, sections with morning/afternoon shifts |
 | 3 | Done | Staff (teaching and non-teaching), login account linking, departments, teacher assignments, homeroom teachers, workload |
-| 4 | Next | Student registration and yearly enrollment |
+| 4 | Done | Student registration (six steps), student ID, yearly enrollment, section allocation board, import of existing students |
+| 5 | Next | Configurable marks |
 
 Staff and student screens come in later steps.
 
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001` to `006`
+- `supabase/migrations/` – database files, run in order: `001` to `007`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -33,7 +34,7 @@ Staff and student screens come in later steps.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):
@@ -62,6 +63,11 @@ To make the files for a website host, run `npm run build`; the `dist` folder is 
 
 ## Updating
 Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expand them into the project folder, then run only the new SQL file named in the changelog.
+
+## Registering and importing students
+- **Students > Register student** is a six-step form. The date of birth is typed in the Ethiopian calendar. The student ID (for example `HMM-2019-7QK4M-X`) is created automatically after saving.
+- **Students > Import students**: download the template, fill it in (one row per student, dates of birth as Ethiopian `dd/mm/yyyy`, format that column as text in Excel), upload the CSV or .xlsx file, check the preview, then import. Download the results file to keep the new student IDs.
+- **Students > Section allocation**: propose, review, move students, approve.
 
 ## Giving staff a login
 1. In Supabase open **Authentication > Users > Add user**, enter the person's email and a password, and tick auto-confirm.
