@@ -2,6 +2,20 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 5 – Marks: configurable structures per semester, entry, results
+- Added: `supabase/migrations/008_step5_marks.sql`, `src/lib/marksEngine.js`, `src/lib/marksData.js`, `tests/marksEngine.test.js`, `src/pages/marks/` (MarksLayout, MarksParts, EntryPage, ResultsPage, StructuresPage, StructureEditor)
+- Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `package.json`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `008_step5_marks.sql` (once, after 001-007). It stops with a message if the old `marks` or `assessment_types` tables already contain rows.
+- What changed:
+  - **Two semesters, each with a final exam.** Every mark structure belongs to one semester of a subject and grade (optionally one stream) and must include a final-exam assessment. The yearly average is the mean of the two semester results (as percents).
+  - **Structures:** groups (code, convert-to, multiplier) with assessments (raw maximum). Groups must add up to the final maximum, or a custom formula (`+ - * /`, brackets, MIN, MAX, group codes and `CODE_RAW`) is used. Rounding once at the end, half up. Presets, copy to other subjects or the other semester, copy a whole year.
+  - **Marks entry grid:** type and leave the cell to save; marks above the maximum are refused; clearing a cell removes the mark; live totals; finalize and reopen per section, subject and semester.
+  - **Results:** per subject (semester 1, semester 2, yearly average, pass or fail) and an all-subjects view. Missing marks are never counted as zero.
+  - **Database rules:** teachers only for their own subject and section; closed years read-only; a maximum cannot be lowered below an entered mark; school settings `pass_mark` (50) and `yearly_rounding_places` (1).
+- After running: set up one structure for one subject, enter a few marks as a teacher, and check the result. `npm test` runs the calculation tests.
+- Known limits: the pass mark of 50 percent is a default still to be confirmed; browser checks were done against a mock backend, so test a real save on your Supabase first; no report cards or printing yet (later step).
+
 ## Step 4 – Students: registration, enrollment, section allocation, import
 - Added: `supabase/migrations/007_step4_students.sql`, `src/lib/studentCode.js`, `src/lib/studentForm.js`, `src/lib/age.js`, `src/lib/allocation.js`, `src/lib/importer.js`, `src/lib/sectionNames.js`, `src/components/EcDatePicker.jsx`, `src/pages/students/` (StudentsLayout, StudentListPage, RegisterPage, StudentParts, StudentProfilePage, ImportPage, AllocationPage)
 - Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/ethiopian.js`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `package.json`, `package-lock.json`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

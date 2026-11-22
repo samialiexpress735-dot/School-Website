@@ -11,6 +11,10 @@ import RegisterPage from "./pages/students/RegisterPage.jsx";
 import StudentProfilePage from "./pages/students/StudentProfilePage.jsx";
 import ImportPage from "./pages/students/ImportPage.jsx";
 import AllocationPage from "./pages/students/AllocationPage.jsx";
+import MarksLayout from "./pages/marks/MarksLayout.jsx";
+import EntryPage from "./pages/marks/EntryPage.jsx";
+import ResultsPage from "./pages/marks/ResultsPage.jsx";
+import StructuresPage from "./pages/marks/StructuresPage.jsx";
 import StaffLayout from "./pages/staff/StaffLayout.jsx";
 import StaffListPage from "./pages/staff/StaffListPage.jsx";
 import StaffFormPage from "./pages/staff/StaffFormPage.jsx";
@@ -49,6 +53,11 @@ function LangRoutes() {
           <Route path="import" element={<ImportPage />} />
           <Route path="allocation" element={<AllocationPage />} />
           <Route path=":id" element={<StudentProfilePage />} />
+        </Route>
+        <Route path="marks" element={<Protected><MarksLayout /></Protected>}>
+          <Route index element={<EntryPage />} />
+          <Route path="results" element={<ResultsPage />} />
+          <Route path="structures" element={<StructuresPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

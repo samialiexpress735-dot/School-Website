@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). Step 5 (configurable marks) is next.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`). Step 6 (attendance) is next.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
@@ -137,7 +137,16 @@ Example: one student record (Samuel Biniyam) with three enrollments: 2026/27 →
 - A mark can never exceed its component's configured maximum.
 - Marks can be locked by the Director or Unit Leader once finalized.
 - Every change is recorded (who, when, old value, new value).
-- The existing `assessment_types` and `marks` tables came from the earlier, simpler design. How they change to support the configurable structure is decided when Step 5 is planned, and the blueprint is updated first.
+**How Step 5 builds this (decided and delivered):**
+- **Two semesters, each with its own final exam.** A structure belongs to one semester of one subject and grade (and optionally one stream). Every structure must have at least one assessment marked as the **final exam**. The yearly average is the mean of the two semester results, each taken as a percent of its own maximum.
+- **Structure = groups + assessments.** A group has a code (for example `CA`, `FINAL`), an optional conversion ("raw total converted to 40") and a multiplier ("x 1.5"). A group is worth `raw total / raw maximum x convert-to x multiplier`. The groups must add up to the final-mark maximum, unless a custom formula is set.
+- **Custom formula (optional):** uses group codes (`CA`, `CA_RAW` for the raw total), `+ - * /`, brackets, `MIN(` `)` and `MAX(` `)`. It is parsed by the system and never run as code.
+- **Rounding** happens once, at the end, half up, to 0, 1 or 2 decimals (per structure). The yearly average uses the school setting `yearly_rounding_places` (default 1).
+- **Who does what:** system admin, director and vice director set up structures and can copy them (to other subjects, to the other semester, or a whole year). Teachers enter marks only for the subject and section they are assigned to; unit leaders, director and vice director read everything and can finalize; only the director, vice director and system admin can reopen. The system admin can correct a mark in a finalized or locked semester; nobody can change anything in a closed year.
+- **Finalizing** is per section, subject and semester. Marks cannot be changed while finalized or while the semester is locked.
+- **Pass mark:** a school setting (`pass_mark`, default **50 percent of the final mark**, still to be confirmed by the school, section 8). It applies to every subject.
+- **Missing marks** are never counted as zero silently: a result with missing marks is shown in italics as incomplete.
+- The earlier `assessment_types` table was replaced by `assessment_structures`, `assessment_groups` and `assessment_components` (it was empty); `marks` now point to an assessment; `mark_locks` records finalized marks.
 
 ### 4.7 Attendance
 
@@ -196,9 +205,9 @@ Views and reports: daily sheet per section, student attendance history across ye
 
 ## 5. Main database tables
 
-(Tables for assessment configuration are redesigned in Step 5, see 4.6; the subject catalogue per academic year is held as data in `subjects` and `grade_subjects`.)
+(Tables for assessment configuration were redesigned in Step 5, see 4.6; the subject catalogue per academic year is held as data in `subjects` and `grade_subjects`.)
 
-`academic_years`, `semesters`, `profiles` (users and roles), `staff`, `departments`, `students`, `guardians`, `student_guardians`, `grades`, `streams`, `sections`, `subjects`, `grade_subjects`, `teacher_assignments`, `enrollments`, `assessment_types`, `marks`, `attendance`, `promotions`, `audit_log`.
+`academic_years`, `semesters`, `profiles` (users and roles), `staff`, `departments`, `students`, `guardians`, `student_guardians`, `grades`, `streams`, `sections`, `subjects`, `grade_subjects`, `teacher_assignments`, `enrollments`, `assessment_structures`, `assessment_groups`, `assessment_components`, `marks`, `mark_locks`, `attendance`, `promotions`, `audit_log`.
 
 ## 6. Build phases
 
@@ -209,8 +218,8 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 2 | Academic years, school calendar (Mon-Fri, holidays), grades, **shifts**, sections, subjects | School structure ready | Done |
 | 3 | Staff registration, teacher assignments, homeroom teachers | Staff ready | Done |
 | 4 | Student registration and yearly enrollment (scope in 6.1) | Students ready | Done |
-| 5 | Configurable assessment structures, marks entry and calculations (4.6) | Marks ready | Next |
-| 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | |
+| 5 | Configurable assessment structures, marks entry and calculations (4.6) | Marks ready | Done |
+| 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Next |
 | 7 | Reports, report cards, promotion | Year-end ready | |
 | 8 | Testing with real staff, fixes | Test version | |
 | 9 | **Timetable, per-period attendance, live alerts** | Period attendance ready | |
