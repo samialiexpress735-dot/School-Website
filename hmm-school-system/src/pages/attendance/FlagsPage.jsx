@@ -4,6 +4,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError, pick, fullName } from "../../lib/ui.jsx";
 import { fetchAll } from "../../lib/marksData.js";
 import { useMarksRef, useYearSemester, YearSemesterPicker, sectionLabel } from "../marks/MarksParts.jsx";
+import { SemesterDatesNotice } from "./AttendanceParts.jsx";
 
 const chunks = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
 
@@ -57,6 +58,7 @@ function Inner({ refData }) {
     <section className="panel">
       <p className="muted">{t("attendance.flags.intro")}</p>
       <YearSemesterPicker refData={refData} state={ys} />
+      <SemesterDatesNotice semesters={refData.semesters} yearId={yearId} semesterId={semesterId} />
       {q.loading ? (
         <Loading />
       ) : q.error ? (

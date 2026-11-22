@@ -2,6 +2,17 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 6 fix – Attendance summary showed zeros when semester dates were empty
+- Added: `supabase/migrations/011_step6_fix_semester_dates.sql`, `tests/semesterDates.test.js`
+- Edited: `src/lib/attendance.js`, `src/pages/attendance/AttendanceParts.jsx`, `src/pages/attendance/RollCallPage.jsx`, `src/pages/attendance/SummaryPage.jsx`, `src/pages/attendance/FlagsPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `011_step6_fix_semester_dates.sql` (once, after 001-010). No existing record is changed.
+- **Cause:** the summary counts only records dated between the chosen semester's start and end dates. When those dates were empty, nothing matched, so present, absent, late, excused and days all showed 0, while the roll call had saved the records (the old rule only checked the dates when they existed).
+- **Fix:** (1) attendance cannot be saved until both semesters have start and end dates (clear message: set them under School structure > Academic years); (2) if a semester has no dates, the summary and the absence-limit list use the whole year instead of zeros; (3) a warning is shown on the Roll call, Summary and Absence limit screens.
+- **What you must do after running it:** open **School structure > Academic years** and set the start and end dates of both semesters of every year that has attendance. Then the semester summary counts per semester.
+- Tested: SQL 001 to 011 in order on a local PostgreSQL. The problem was reproduced first (2 absent + 1 late saved, summary showed 0 for the chosen semester, 2 and 1 for the whole year). After the fix: summary equals the raw table for a teacher, the registrar and the director; saving with empty dates, with only one semester dated, and outside both semesters is refused; with both dated it works. `npm test` passes (25 tests) and the warning component was rendered in English and Amharic. The three screens were not clicked through in a real browser.
+- Not changed: records saved on dates that lie outside the dates you later set stay in the database; they appear in no semester total. Check the dates before real use.
+
 ## Step 6 – Daily attendance
 - Added: `supabase/migrations/010_step6_attendance.sql`, `src/lib/attendance.js`, `tests/attendance.test.js`, `src/pages/attendance/` (AttendanceLayout, AttendanceParts, RollCallPage, SummaryPage, FlagsPage)
 - Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

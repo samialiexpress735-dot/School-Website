@@ -4,6 +4,8 @@ import { useAuth } from "../../lib/AuthContext.jsx";
 import { useQuery } from "../../lib/ui.jsx";
 import { can, ATTENDANCE_VIEW_ALL } from "../../lib/roles.js";
 import { fetchAll, sortSections } from "../../lib/marksData.js";
+import { semesterDatesStatus } from "../../lib/attendance.js";
+import { useLang } from "../../i18n/index.jsx";
 
 // The sections the signed-in person may see in a year: everyone with a view-all role sees all of them,
 // a teacher sees the sections they teach or are homeroom of.
@@ -57,3 +59,15 @@ export const semesterOfDate = (semesters, yearId, iso) =>
   semesters.find((s) => s.academic_year_id === yearId && s.start_date && s.end_date && iso >= s.start_date && iso <= s.end_date) || null;
 
 export const byName = (lang, nameFn) => (a, b) => nameFn(a.students, lang).localeCompare(nameFn(b.students, lang), lang === "am" ? "am" : "en");
+
+// Warns when semester dates are missing: without them the semester numbers cannot be counted correctly.
+export function SemesterDatesNotice({ semesters, yearId, semesterId = null }) {
+  const { t } = useLang();
+  const status = semesterDatesStatus(semesters, yearId, semesterId);
+  if (!status) return null;
+  return (
+    <p className="flash warn" role="status">
+      {status === "semester" ? t("attendance.datesMissingSemester") : t("attendance.datesMissingYear")}
+    </p>
+  );
+}

@@ -632,6 +632,8 @@ export default {
   },
   attendance: {
     title: "Attendance",
+    datesMissingSemester: "The start and end dates of this semester are not set, so the numbers below cover the whole year. Set the dates under School structure > Academic years.",
+    datesMissingYear: "The start and end dates of both semesters must be set before attendance can be saved. Set them under School structure > Academic years.",
     tabs: { roll: "Daily roll call", summary: "Summary", flags: "Absence limit" },
     intro: "Everyone starts as present. Change only the exceptions to absent, late or excused, then save. School days are Monday to Friday; holidays, exam days and breaks are skipped.",
     date: "Date",

@@ -21,7 +21,7 @@ Staff and student screens come in later steps.
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001` to `010`
+- `supabase/migrations/` – database files, run in order: `001` to `011`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -34,7 +34,7 @@ Staff and student screens come in later steps.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`, then `011_step6_fix_semester_dates.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):

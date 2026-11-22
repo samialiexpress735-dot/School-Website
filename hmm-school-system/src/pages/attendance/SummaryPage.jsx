@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError, pick, fullName } from "../../lib/ui.jsx";
 import { useMarksRef, useYearSemester, YearSemesterPicker, sectionLabel } from "../marks/MarksParts.jsx";
-import { useVisibleSections, loadSectionStudents, byName } from "./AttendanceParts.jsx";
+import { useVisibleSections, loadSectionStudents, byName, SemesterDatesNotice } from "./AttendanceParts.jsx";
 
 export default function SummaryPage() {
   const refQ = useMarksRef();
@@ -43,6 +43,7 @@ function Inner({ refData }) {
           </label>
         }
       />
+      <SemesterDatesNotice semesters={refData.semesters} yearId={ys.yearId} semesterId={ys.semesterId} />
       {!section ? <p className="empty">{t("attendance.noSections")}</p> : <Table key={`${ys.yearId}|${ys.semesterId}|${section.id}`} yearId={ys.yearId} semesterId={ys.semesterId} section={section} />}
     </section>
   );

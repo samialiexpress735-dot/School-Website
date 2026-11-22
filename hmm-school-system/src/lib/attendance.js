@@ -83,3 +83,15 @@ export function changedRows(current, initial, taken) {
 
 // An excused absence needs a short note (the database refuses it otherwise)
 export const missingNotes = (rows) => Object.entries(rows).filter(([, r]) => r.status === "excused" && !String(r.note || "").trim()).map(([id]) => id);
+
+// Absences are counted per semester, so the semesters need start and end dates.
+// Returns "semester" (the chosen semester has no dates), "year" (a semester of the year has no dates) or null.
+export function semesterDatesStatus(semesters, yearId, semesterId = null) {
+  const list = (semesters || []).filter((s) => s.academic_year_id === yearId);
+  const has = (s) => Boolean(s.start_date && s.end_date);
+  if (semesterId) {
+    const one = list.find((s) => s.id === semesterId);
+    return one && !has(one) ? "semester" : null;
+  }
+  return list.length > 0 && list.some((s) => !has(s)) ? "year" : null;
+}

@@ -11,7 +11,7 @@ import {
 } from "../../lib/attendance.js";
 import { fetchAll } from "../../lib/marksData.js";
 import { useMarksRef, useYearSemester, sectionLabel } from "../marks/MarksParts.jsx";
-import { useVisibleSections, loadSectionStudents, semesterOfDate, byName } from "./AttendanceParts.jsx";
+import { useVisibleSections, loadSectionStudents, semesterOfDate, byName, SemesterDatesNotice } from "./AttendanceParts.jsx";
 
 export default function RollCallPage() {
   const refQ = useMarksRef();
@@ -91,6 +91,7 @@ function Inner({ refData }) {
         </div>
       </div>
       {date && <p className="small ec-line">{formatEc(date, lang)}</p>}
+      <SemesterDatesNotice semesters={refData.semesters} yearId={yearId} />
 
       {vis.sections.length === 0 ? (
         <p className="empty">{t("attendance.noSections")}</p>
