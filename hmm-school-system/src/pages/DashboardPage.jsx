@@ -9,7 +9,7 @@ const MODULES = [
   { key: "staff", step: 3, to: "staff" },
   { key: "students", step: 4, to: "students" },
   { key: "marks", step: 5, to: "marks" },
-  { key: "attendance", step: 6 },
+  { key: "attendance", step: 6, to: "attendance" },
   { key: "reports", step: 7 },
 ];
 

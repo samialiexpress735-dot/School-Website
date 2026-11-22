@@ -393,3 +393,38 @@ tbody tr:hover { background: #eef6f6; }
 
 .shell { display: flex; flex-direction: column; min-height: 100vh; }
 .shell > .content { flex: 1; width: 100%; }
+
+/* ==========================================================================
+   Step 6: attendance (daily roll call)
+   ========================================================================== */
+.datenav-row { display: flex; gap: 0.4rem; align-items: center; }
+.datenav-row input[type="date"] { width: auto; }
+.datenav-row .btn-small { min-width: 2.75rem; padding-inline: 0.6rem; font-size: 1.25rem; line-height: 1; }
+.ec-line { margin: -0.25rem 0 0.75rem; color: var(--gold-text); }
+.roll-counts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.roll { list-style: none; margin: 0 0 1.25rem; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.roll-row { display: grid; grid-template-columns: minmax(12rem, 1fr) auto; align-items: center; gap: 0.5rem 1rem; padding: 0.7rem 1rem; border-bottom: 1px solid var(--line); border-inline-start: 4px solid transparent; transition: background var(--t-fast); }
+.roll-row:last-child { border-bottom: 0; }
+.roll-row:hover { background: #f8fbfb; }
+.roll-row.flagged { border-inline-start-color: var(--terracotta); background: #fdf6f4; }
+.roll-who { display: flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.6rem; }
+.roll-who .nm { font-weight: 700; overflow-wrap: anywhere; }
+.code-small { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.03em; }
+.roll-note { grid-column: 1 / -1; }
+.seg { display: inline-flex; border: 1px solid #aab6c3; border-radius: var(--radius-sm); overflow: hidden; background: #fff; }
+.seg-btn { font: inherit; cursor: pointer; min-height: 2.75rem; min-width: 4.6rem; padding: 0.3rem 0.8rem; border: 0; border-inline-start: 1px solid var(--line); background: #fff; color: var(--text); transition: background var(--t-fast), color var(--t-fast); }
+.seg-btn:first-child { border-inline-start: 0; }
+.seg-btn:hover:not(:disabled):not(.on) { background: var(--paper); }
+.seg-btn:disabled { cursor: not-allowed; opacity: 0.75; }
+.seg-btn.on { font-weight: 700; color: #fff; }
+.seg-btn.on.seg-present { background: var(--forest); }
+.seg-btn.on.seg-absent { background: var(--terracotta); }
+.seg-btn.on.seg-late { background: var(--gold); color: var(--ink); }
+.seg-btn.on.seg-excused { background: var(--sky); }
+details.subpanel > summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+details.subpanel[open] > summary { margin-bottom: 0.5rem; }
+@media (max-width: 640px) {
+  .roll-row { grid-template-columns: 1fr; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .seg-btn { min-width: 0; padding-inline: 0.2rem; font-size: 0.9rem; }
+}

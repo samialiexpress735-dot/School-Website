@@ -2,6 +2,20 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 6 – Daily attendance
+- Added: `supabase/migrations/010_step6_attendance.sql`, `src/lib/attendance.js`, `tests/attendance.test.js`, `src/pages/attendance/` (AttendanceLayout, AttendanceParts, RollCallPage, SummaryPage, FlagsPage)
+- Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `010_step6_attendance.sql` (once, after 001-009).
+- What changed:
+  - **Daily roll call:** pick year, section and date (previous and next school day buttons; Ethiopian date shown). Everyone starts as present; change the exceptions (absent, late, excused) and save. Excused needs a note. Saving again updates the same day; unchanged students are not rewritten.
+  - **Rules in the database:** Monday to Friday only, no holidays, exam days or breaks, no future dates, inside the semester dates, closed year read-only, per-period records refused until Step 9. Teachers (and unit leaders who teach) can change only the **last 3 school days** and only their own sections; the system admin, director and vice director can correct any school day of an open year. Registrars and other unit leaders can read only. Every change is audited.
+  - **Absence limit:** school default 5 per semester (setting `absence_threshold`); each section can have its own number, changed by its homeroom teacher or the administration and recorded in the audit log. Only absent counts; late and excused do not.
+  - **Summary and Absence limit screens:** totals per student per semester, and the list of students at or above the limit for the people allowed to see them. These are screens, not messages; notifications come in Step 9.
+  - **Policy change:** the director and vice director can now write attendance (before, only the system admin could). The old two write rules were replaced by one.
+- After running: sign in as a homeroom teacher, open **Attendance**, mark one student absent and save; try a date older than 3 school days (refused), then sign in as the director and correct it.
+- Tested: SQL 001 to 010 run in order on a local PostgreSQL and checked as a homeroom teacher, another teacher, the director, a registrar and a unit leader (save, repeat save, change, note rule, window, weekend, holiday, future date, per-period, delete, threshold change and audit, summary, flags, closed year). The app builds and `npm test` passes (20 tests). The three screens were rendered in a simulated browser against a mock backend (English and Amharic, saving, the note check); they were **not** clicked through in a real browser or on a phone. Test a real save on your Supabase first.
+
 ## UI polish update – lead-designer review
 - Added: nothing
 - Edited: `src/styles.css`, `src/components/Shell.jsx`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

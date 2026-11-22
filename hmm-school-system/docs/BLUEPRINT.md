@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). Step 6 (attendance) is next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). Step 7 (reports, report cards, promotion) is next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
@@ -193,6 +193,19 @@ Attendance is built in two stages: **daily roll call first** (Step 6), then **pe
 
 Views and reports: daily sheet per section, student attendance history across years, monthly and semester totals, students at or above the absence number, shift-by-shift summaries. Dates are shown in the Ethiopian calendar and stored as standard dates.
 
+**As built in Step 6 (daily roll call) - decisions and assumptions**
+- **Screens (Attendance):** *Daily roll call* (pick year, section and date; the date has previous and next school day buttons and the Ethiopian date is shown under it), *Summary* (totals per student for a semester) and *Absence limit* (the students who have reached their section's limit). The date itself is chosen with the browser's standard date picker; the Ethiopian date is displayed beside it.
+- **Roll call:** everyone starts as present; the teacher changes only the exceptions with large four-way buttons (present, absent, late, excused, always with a word as well as a color) and presses Save. A day that was already taken opens with its saved values. Only changed records are written, and saving the same day again never creates a duplicate. A student who is withdrawn or graduated is not listed.
+- **Saved together or not at all:** `save_daily_attendance` saves the whole sheet in one step; if any record breaks a rule, nothing is saved.
+- **Rules in the database (update 010):** Monday to Friday only; not on holidays, exam days or breaks of the school calendar; never a future date; the date must fall inside a semester when the semester dates are set; the student must be placed in a section and not withdrawn or graduated; a closed academic year is read-only for everyone; the student and date of a record can never be changed; records cannot be deleted (except by the system admin); per-period records (with a subject) are refused until Step 9.
+- **Who can write:** the system admin, director and vice director can register or correct any school day of an open year (the director and vice director could not write attendance before this update; they can now, as this blueprint always said). Teachers, and unit leaders who also teach, can write only for sections they teach or are homeroom of, and only for the **last 3 school days, today included** (setting `attendance_edit_school_days`, default 3). A holiday or weekend does not use up one of the 3 days. Registrars and other unit leaders can read only.
+- **Excused needs a short note** (enforced in the database).
+- **Every change is audited** (who, when, old and new value) by the existing audit trigger on `attendance`.
+- **Absence limit:** the school default is the setting `absence_threshold` (5). A section can have its own number (`sections.absence_threshold`); empty means the school number. The homeroom teacher of the section, the director, vice director and system admin can change it on the roll call screen; each change is written to the audit log (`ABSENCE_THRESHOLD`). Only **absent** counts; late and excused do not.
+- **Flagging:** a student at or above the limit in the semester is shown with a red edge and the words "At the limit" on the roll call, in the Summary, and in the *Absence limit* list. Each person sees the sections their role allows (homeroom and subject teachers their own sections; unit leaders, registrar, director, vice director and system admin all). **This is a list on screen, not a message sent to anyone;** notifications arrive with Step 9.
+- **Dates and time zones:** the 3-day window is decided by the database using its own date (Supabase runs on UTC; Ethiopia is 3 hours ahead). The screen mirrors the rule, so around midnight the screen and the database can differ by one day; the database always has the final say and the screen shows its message.
+- **Not in Step 6:** timetable and per-period attendance (Step 9), notifications, printing and export, attendance for students who were not in a section.
+
 **Per-period attendance with live alerts (Step 9)**
 - Needs a **timetable** first (periods, times per shift, which subject in which period). The timetable is built at the start of Step 9.
 - Subject teachers register attendance for their own period. The daily roll call stays; per-period records link to the same student and day.
@@ -231,8 +244,8 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 3 | Staff registration, teacher assignments, homeroom teachers | Staff ready | Done |
 | 4 | Student registration and yearly enrollment (scope in 6.1) | Students ready | Done |
 | 5 | Configurable assessment structures, marks entry and calculations (4.6) | Marks ready | Done |
-| 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Next |
-| 7 | Reports, report cards, promotion | Year-end ready | |
+| 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Done |
+| 7 | Reports, report cards, promotion | Year-end ready | Next |
 | 8 | Testing with real staff, fixes | Test version | |
 | 9 | **Timetable, per-period attendance, live alerts** | Period attendance ready | |
 | 10 | Public website (news, events, gallery, admissions, results lookup, parent and student logins) | Full site | |
@@ -273,6 +286,7 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 - Required registration fields, the duplicate warning and the age warning are as in 4.3; warnings never block.
 - The registrar chooses the stream at registration; the director and vice director can change it later. Existing students of Grades 9 to 12 can be imported.
 - Photo upload is skipped for now.
+- Step 6 attendance: teachers write only the last 3 school days (today included); the administration can correct any day of an open year; excused needs a note; only absent counts toward the limit; the limit can be set per section; flagged students appear on screen (no messages until Step 9). Details in 4.7 "As built".
 - Hosting is undecided (TBD). The school's final branding (logo, official colors) is undecided; until then the working UI palette and animation plan in section 10 is used.
 
 ## 8. Still needed from you
@@ -285,6 +299,7 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 6. School logo and official colors: **undecided**. There is no logo yet. Section 10 proposes a working UI palette so the system looks good now; it is not a branding decision and can be replaced later by changing a few color values. Please say if the school already has official colors or a logo to use instead.
 7. Who will be the first System Admin?
 8. Absence rule: decided as 5 absences per semester. Still to confirm: do excused and late marks stay uncounted (assumed)?
+9. Step 6 assumptions to confirm: (a) the 3-day edit window counts today and the two school days before it; (b) an excused absence must have a note; (c) a unit leader can register attendance only for a section they also teach; (d) a locked semester does not block attendance; (e) the homeroom teacher, not the subject teachers, normally takes the daily roll call, but a subject teacher of the section is also allowed.
 
 ## 9. Working rules (how we deliver and test)
 
@@ -347,7 +362,7 @@ Inspired by the Ethiopian highlands around Debre Birhan ("city of light"): deep 
 - **Student registration:** a step-by-step form with a visible progress bar: 1 Student, 2 Address and contact, 3 Guardians, 4 Previous education, 5 Other and documents, 6 Review. Each step validates before moving on; progress is not lost when moving back; the review step lists every field before saving.
 - **Yearly enrollment and stream allocation:** pick year and grade, choose Natural or Social Science for Grades 11 and 12, with the student's earlier enrollments shown beside it as a timeline.
 - **Section allocation board:** one column per section showing its count and balance (for example sex split), student cards that can be moved between columns by drag **and** by a "Move to..." button or keyboard, a "Propose allocation" action, and a clear Approve step. Numbers update live as students move.
-- **Daily roll call (Step 6):** everyone starts as present; large toggles cycle present, absent, late, excused; a running count of absences; students at or above the absence threshold are marked clearly.
+- **Daily roll call (Step 6, built):** everyone starts as present; a four-way button group per student (present, absent, late, excused, each with a word); a running count per status; students at or above the absence limit have a red edge and the words "At the limit"; on phones the four buttons sit in one row under the name.
 - **Marks entry (Step 5):** a spreadsheet-like grid following the subject's configured assessment structure, with running totals, a visible maximum per column, and instant red feedback if a mark exceeds its maximum.
 
 ### 10.6 Animation plan
@@ -385,7 +400,7 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 ### 10.8 How and when it is applied
 - The UI plan is implemented in small, reviewable updates; no database changes are needed for it.
 - **UI foundation update (done, before Step 4):** design tokens and the working palette; shared button, panel, table, pill and message styles; page fade-in on every screen change; the animated login page (gold margin line draws down, ruled lines and text fade in); the dashboard welcome banner with today's date in both calendars and staggered module cards; sliding-in navigation underline; flash messages that slide in and "Saved." messages that fade away by themselves; skeleton loading placeholders instead of a plain "Loading..." line; button spinner support (`aria-busy`); the new favicon colors. It touches `src/styles.css` and a few shared components and pages only.
-- **Still to come, with the step that needs it:** highlight of a just-saved row, language cross-fade, dialogs and menus, attendance toggles and threshold pulse (Step 6), marks grid feedback and counting totals (Step 5), the left sidebar (after Step 6), stat tiles on the dashboard (as each step provides data).
+- **Still to come, with the step that needs it:** highlight of a just-saved row, language cross-fade, dialogs and menus, the threshold pulse and animated counters on the roll call, marks grid feedback and counting totals, the left sidebar (the planned point after Step 6 has now been reached), stat tiles on the dashboard (as each step provides data).
 - **Done in Step 4:** the six-step registration form with progress bar and review, student cards on phones (the student list becomes cards), the section allocation board (drag and the "Move to" menu, live counts), and a step slide-in. Not yet done: a timeline beside the enrollment (the enrollment history is a table), counting animations on the board.
 - A future logo or official colors replace the palette by editing the tokens in 10.2; nothing else changes.
 
@@ -416,3 +431,4 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 - A "skip to content" link and a print stylesheet for report cards (Step 7).
 
 **Files touched:** `src/styles.css` (new block at the end), `src/components/Shell.jsx` (footer), `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`. No database change.
+- **Done in Step 6:** the daily roll call, summary and absence-limit screens (section 4.7 "As built"), styled with the existing tokens. Not yet done: the pulse when a student reaches the limit and animated counters.

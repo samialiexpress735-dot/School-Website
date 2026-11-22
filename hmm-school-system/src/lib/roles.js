@@ -20,3 +20,10 @@ export const MARK_UNLOCKERS = ["system_admin", "director", "vice_director"];
 // Step 4: who registers, imports and allocates students, and who may change a stream.
 export const REGISTRARS = ["system_admin", "registrar"];
 export const STREAM_CHANGERS = ["system_admin", "registrar", "director", "vice_director"];
+
+// Step 6: attendance. The administration can register or correct any school day of an open year.
+// Teachers (and unit leaders who teach) register only for their own sections and only for the last school days.
+// The database decides (010_step6_attendance.sql); these lists only decide what the screens offer.
+export const ATTENDANCE_ADMINS = ["system_admin", "director", "vice_director"];
+export const ATTENDANCE_TAKERS = ["teacher", "unit_leader"];
+export const ATTENDANCE_VIEW_ALL = ["system_admin", "director", "vice_director", "unit_leader", "registrar"];

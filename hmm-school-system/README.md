@@ -21,7 +21,7 @@ Staff and student screens come in later steps.
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001` to `008`
+- `supabase/migrations/` – database files, run in order: `001` to `010`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -34,7 +34,7 @@ Staff and student screens come in later steps.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):
@@ -92,3 +92,7 @@ Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expan
 - The site uses `#` addresses (for example `/#/am/dashboard`) so it works on any hosting, including basic Ethio Telecom hosting.
 - Subjects are kept per academic year. Update `006` reconciles the draft list from `003_seed_data.sql` with the blueprint; still confirm the subjects and periods for each grade and stream (HPE and Agriculture in Grades 11 and 12 are not loaded until you confirm them).
 - Fonts are bundled (no Google Fonts needed).
+
+## Taking attendance
+- **Attendance > Daily roll call:** choose the section and the date. Everyone starts as present; change only the exceptions and press **Save attendance**. Teachers can change the last 3 school days of their own sections; the administration can correct any school day of an open year.
+- The **absence limit** (5 per semester by default) can be changed per section by the homeroom teacher or the administration, inside the roll call screen. **Summary** shows semester totals, and **Absence limit** lists the students who have reached it.
