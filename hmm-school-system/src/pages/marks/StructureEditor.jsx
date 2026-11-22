@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
 import { useNotice, Notice, pick } from "../../lib/ui.jsx";
@@ -91,12 +91,46 @@ export function validate(d) {
   return [...errs];
 }
 
-export default function StructureEditor({ draft: initial, title, scopeText, context, readOnly, hasMarks, refData, subjectsForCopy, onClose, onSaved }) {
+// What decides a result, ignoring names and order. Used to tell whether saving changes the results of students.
+function calcSignature(d) {
+  const groups = d.groups.map((g) => `${String(g.code).trim().toUpperCase()}|${String(g.scale_to).trim() === "" ? "-" : num(g.scale_to)}|${num(g.factor)}`).sort();
+  const comps = d.groups
+    .flatMap((g) => g.components.map((c) => `${String(g.code).trim().toUpperCase()}|${c.id || c.key}|${num(c.raw_max)}|${c.is_final_exam ? 1 : 0}`))
+    .sort();
+  return JSON.stringify({ fm: num(d.final_max), r: Number(d.rounding_places) || 0, f: String(d.formula || "").trim(), groups, comps });
+}
+
+export default function StructureEditor({ draft: initial, title, scopeText, context, readOnly, isAdmin, refData, subjectsForCopy, onClose, onSaved }) {
   const { t, lang } = useLang();
   const notice = useNotice();
   const [d, setD] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [showAdv, setShowAdv] = useState(Boolean(initial.formula));
+  const [status, setStatus] = useState(null); // answer of the database: ok, finalized, semester_locked, not_assigned ...
+  const [counts, setCounts] = useState(null); // marks already entered for this structure (all sections)
+
+  // Ask the database whether this person may change the structure now, and how many marks it already has.
+  // The database makes the final decision; this only shows the reason on screen.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const r = await supabase.rpc("structure_edit_status", {
+        p_year: context.academic_year_id, p_grade: context.grade_id, p_stream: context.stream_id || null,
+        p_subject: context.subject_id, p_semester: context.semester_id,
+      });
+      if (!alive) return;
+      const st = r.error ? "error" : r.data;
+      setStatus(st);
+      if (initial.id && st === "ok") {
+        const c = await supabase.rpc("structure_mark_counts", { p_structure: initial.id });
+        if (alive && !c.error) setCounts(c.data);
+      }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const blocked = status !== null && status !== "ok" && !readOnly;
+  const ro = readOnly || blocked;
 
   const setGroup = (gi, patch) => setD((x) => ({ ...x, groups: x.groups.map((g, i) => (i === gi ? { ...g, ...patch } : g)) }));
   const setComp = (gi, ci, patch) =>
@@ -118,11 +152,36 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
   const formulaErr = hasFormula ? checkFormula({ ...n, groups: d.groups.map((g, i) => ({ ...n.groups[i], code: String(g.code).trim().toUpperCase() })) }) : null;
   const valid = errors.length === 0 && finalOk && sumOk && !formulaErr;
 
+  // Assessments of the saved structure that are no longer in the draft (removed one by one or with their group).
+  const removedIds = () => {
+    const now = new Set(d.groups.flatMap((g) => g.components.map((c) => c.id).filter(Boolean)));
+    return initial.groups.flatMap((g) => g.components.map((c) => c.id)).filter((id) => id && !now.has(id));
+  };
+
   async function save() {
-    if (!valid || readOnly) return;
+    if (!valid || ro || status !== "ok") return;
     setBusy(true);
     notice.clear();
+
+    // Ask before anything with marks changes. Nothing changes until the person confirms.
+    let confirmDelete = false;
+    if (d.id) {
+      const gone = removedIds();
+      const c = await supabase.rpc("structure_mark_counts", { p_structure: d.id, p_components: gone.length ? gone : null });
+      if (c.error) { setBusy(false); return notice.fail(c.error); }
+      const lines = [];
+      if (gone.length && c.data.selected?.marks > 0) {
+        lines.push(t("marks.editor.confirmRemoveMarks", { marks: c.data.selected.marks, students: c.data.selected.students }));
+        confirmDelete = true;
+      }
+      if (c.data.marks > 0 && calcSignature(d) !== calcSignature(initial)) {
+        lines.push(t("marks.editor.confirmRecalc", { students: c.data.students }));
+      }
+      if (lines.length && !window.confirm([...lines, "", t("marks.editor.confirmAsk")].join("\n"))) { setBusy(false); return; }
+    }
+
     const payload = {
+      confirm_delete_marks: confirmDelete,
       id: d.id || undefined,
       ...context,
       final_max: num(d.final_max),
@@ -144,11 +203,17 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
   }
 
   async function remove() {
-    if (!d.id || !window.confirm(t("marks.editor.confirmDelete"))) return;
+    if (!d.id || ro) return;
     setBusy(true);
-    const r = await supabase.from("assessment_structures").delete().eq("id", d.id);
+    notice.clear();
+    const c = await supabase.rpc("structure_mark_counts", { p_structure: d.id });
+    if (c.error) { setBusy(false); return notice.fail(c.error); }
+    const withMarks = c.data.marks > 0;
+    const text = withMarks ? t("marks.editor.confirmDeleteMarks", { marks: c.data.marks, students: c.data.students }) : t("marks.editor.confirmDelete");
+    if (!window.confirm(withMarks ? `${text}\n\n${t("marks.editor.confirmAsk")}` : text)) { setBusy(false); return; }
+    const r = await supabase.rpc("delete_assessment_structure", { p_id: d.id, p_confirm_delete_marks: withMarks });
     setBusy(false);
-    if (r.error) return notice.fail(r.error, r.error.code === "23503" ? t("marks.editor.deleteBlocked") : undefined);
+    if (r.error) return notice.fail(r.error);
     onSaved();
   }
 
@@ -163,8 +228,10 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
       </div>
       <p className="small muted">{scopeText}</p>
       <Notice notice={notice.notice} />
-      {hasMarks && <p className="flash warn">{t("marks.editor.hasMarks")}</p>}
-      <fieldset disabled={readOnly || busy} className="plain">
+      {blocked && <p className="flash warn" role="alert">{t(`marks.editor.blocked.${status}`)}</p>}
+      {counts?.marks > 0 && !ro && <p className="flash warn">{t("marks.editor.hasMarks", { marks: counts.marks, students: counts.students })}</p>}
+      {!isAdmin && !ro && <p className="small muted">{t("marks.editor.sharedNote")}</p>}
+      <fieldset disabled={ro || busy} className="plain">
         <div className="formgrid">
           <label>
             {t("marks.editor.finalMax")}
@@ -249,14 +316,14 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
           : <p className="msg-err">{t("marks.editor.sumMismatch", { sum: fmt(sum, 3), max: fmt(n.final_max) })}</p>)}
       </div>
 
-      {!readOnly && (
+      {!ro && (
         <div className="row-actions">
-          <button className="btn" disabled={!valid || busy} aria-busy={busy} onClick={save}>{t("marks.editor.save")}</button>
+          <button className="btn" disabled={!valid || busy || status !== "ok"} aria-busy={busy} onClick={save}>{t("marks.editor.save")}</button>
           {d.id && <button className="btn-small danger" disabled={busy} onClick={remove}>{t("marks.editor.delete")}</button>}
         </div>
       )}
 
-      {d.id && !readOnly && <CopyTo sourceId={d.id} context={context} refData={refData} subjects={subjectsForCopy} lang={lang} />}
+      {d.id && !ro && isAdmin && <CopyTo sourceId={d.id} context={context} refData={refData} subjects={subjectsForCopy} lang={lang} />}
     </section>
   );
 }

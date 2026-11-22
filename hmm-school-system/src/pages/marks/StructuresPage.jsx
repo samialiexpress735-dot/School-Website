@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, LoadError, Loading, pick } from "../../lib/ui.jsx";
-import { can, MARK_STRUCTURE_EDITORS } from "../../lib/roles.js";
+import { can, MARK_STRUCTURE_ADMINS, MARK_STRUCTURE_EDITORS } from "../../lib/roles.js";
 import { effectiveStream, hasFinalExam, pickStructure } from "../../lib/marksEngine.js";
 import { fetchAll, loadStructures, subjectsOfGrade } from "../../lib/marksData.js";
 import { useMarksRef } from "./MarksParts.jsx";
@@ -20,6 +20,8 @@ export default function StructuresPage() {
 function Inner({ refData, reloadRef }) {
   const { t, lang } = useLang();
   const { profile } = useAuth();
+  const admin = can(profile, MARK_STRUCTURE_ADMINS); // every structure, copy tools, school settings
+  const isTeacher = !admin && profile?.role === "teacher"; // only the subjects they are assigned to
   const editor = can(profile, MARK_STRUCTURE_EDITORS);
   const [yearId, setYearId] = useState(() => (refData.years.find((y) => y.is_current) || refData.years[0]).id);
   const [gradeId, setGradeId] = useState(refData.grades[0]?.id || "");
@@ -40,31 +42,37 @@ function Inner({ refData, reloadRef }) {
   const sems = refData.semesters.filter((s) => s.academic_year_id === yearId).sort((a, b) => a.number - b.number);
   const structQ = useQuery(() => loadStructures({ yearId, gradeId }), [yearId, gradeId]);
   const gsQ = useQuery(() => fetchAll(() => supabase.from("grade_subjects").select("*").eq("academic_year_id", yearId).eq("grade_id", gradeId)), [yearId, gradeId]);
-  const marksQ = useQuery(async () => {
-    // which structures already have marks (so the editor can warn)
-    const ids = (structQ.data || []).map((s) => s.id);
-    if (ids.length === 0) return { data: new Set() };
-    const comps = (structQ.data || []).flatMap((s) => s.groups.flatMap((g) => g.components.map((c) => ({ c: c.id, s: s.id }))));
-    const owner = new Map(comps.map((x) => [x.c, x.s]));
-    const found = new Set();
-    for (let i = 0; i < comps.length; i += 60) {
-      const chunk = comps.slice(i, i + 60).map((x) => x.c);
-      const r = await supabase.from("marks").select("component_id").in("component_id", chunk).limit(1000);
-      if (r.error) return r;
-      r.data.forEach((m) => found.add(owner.get(m.component_id)));
-    }
-    return { data: found };
-  }, [structQ.data]);
+  // A teacher sees and edits only the subjects they are assigned to (year, grade, stream).
+  // The database enforces the same rule; this only keeps the screen short.
+  const mineQ = useQuery(async () => {
+    if (!isTeacher || !refData.myStaffId) return { data: [] };
+    const r = await supabase
+      .from("teacher_assignments")
+      .select("subject_id, section:sections(grade_id, stream_id)")
+      .eq("academic_year_id", yearId)
+      .eq("staff_id", refData.myStaffId);
+    if (r.error) return r;
+    return { data: r.data.filter((x) => x.section).map((x) => ({ subject_id: x.subject_id, grade_id: x.section.grade_id, stream_id: x.section.stream_id })) };
+  }, [yearId, isTeacher]);
+  const mine = mineQ.data || [];
+  const grades = isTeacher ? refData.grades.filter((g) => mine.some((m) => m.grade_id === g.id)) : refData.grades;
+
+  useEffect(() => {
+    if (isTeacher && !mineQ.loading && grades.length > 0 && !grades.find((g) => g.id === gradeId)) setGradeId(grades[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTeacher, mineQ.loading, yearId, grades.length]);
 
   const stream = hasStreams ? streamId : general?.id || "";
-  const subjects = useMemo(
-    () => subjectsOfGrade(gsQ.data || [], refData.subjects, { yearId, gradeId, streamId: stream, streams: refData.streams }),
-    [gsQ.data, refData, yearId, gradeId, stream]
-  );
+  const subjects = useMemo(() => {
+    const all = subjectsOfGrade(gsQ.data || [], refData.subjects, { yearId, gradeId, streamId: stream, streams: refData.streams });
+    if (!isTeacher) return all;
+    return all.filter((sub) => mine.some((m) => m.subject_id === sub.id && m.grade_id === gradeId && (!hasStreams || m.stream_id === streamId)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gsQ.data, refData, yearId, gradeId, stream, isTeacher, mineQ.data]);
   const eff = effectiveStream(stream, refData.streams);
 
-  if (structQ.loading || gsQ.loading) return <Loading />;
-  if (structQ.error || gsQ.error) return <LoadError />;
+  if (structQ.loading || gsQ.loading || mineQ.loading) return <Loading />;
+  if (structQ.error || gsQ.error || mineQ.error) return <LoadError />;
   const structures = structQ.data;
 
   const find = (semester, subject) => pickStructure(structures, { semesterId: semester.id, gradeId, streamId: eff, subjectId: subject.id });
@@ -81,6 +89,7 @@ function Inner({ refData, reloadRef }) {
     <>
       <section className="panel">
         <p className="muted">{t("marks.structures.intro")}</p>
+        {isTeacher && <p className="small muted">{t("marks.structures.teacherIntro")}</p>}
         {year.is_closed && <p className="flash warn">{t("marks.structures.closedYear")}</p>}
         <div className="toolbar">
           <label>
@@ -92,7 +101,7 @@ function Inner({ refData, reloadRef }) {
           <label>
             <span className="small muted">{t("marks.grade")}</span>
             <select value={gradeId} onChange={(e) => { setGradeId(e.target.value); setOpen(null); }}>
-              {refData.grades.map((g) => (<option key={g.id} value={g.id}>{pick(g, lang)}</option>))}
+              {grades.map((g) => (<option key={g.id} value={g.id}>{pick(g, lang)}</option>))}
             </select>
           </label>
           {hasStreams && (
@@ -106,7 +115,7 @@ function Inner({ refData, reloadRef }) {
         </div>
 
         {subjects.length === 0 ? (
-          <p className="empty">{t("marks.structures.noSubjects")}</p>
+          <p className="empty">{isTeacher ? t("marks.structures.noneAssigned") : t("marks.structures.noSubjects")}</p>
         ) : (
           <>
             <p className="small muted">
@@ -179,7 +188,7 @@ function Inner({ refData, reloadRef }) {
               subject_id: open.subject.id,
             }}
             readOnly={!editor || year.is_closed}
-            hasMarks={Boolean(open.structure && marksQ.data?.has(open.structure.id))}
+            isAdmin={admin}
             refData={refData}
             subjectsForCopy={subjects}
             onClose={() => setOpen(null)}
@@ -188,7 +197,7 @@ function Inner({ refData, reloadRef }) {
         </>
       )}
 
-      {editor && <Tools refData={refData} year={year} onDone={() => { setOpen(null); structQ.reload(); }} onSettings={reloadRef} />}
+      {admin && <Tools refData={refData} year={year} onDone={() => { setOpen(null); structQ.reload(); }} onSettings={reloadRef} />}
     </>
   );
 }

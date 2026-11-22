@@ -2,6 +2,20 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 5 update – Teachers edit the mark structure of their own subject
+- Added: `supabase/migrations/009_step5_teacher_structures.sql`
+- Edited: `src/lib/roles.js`, `src/pages/marks/StructuresPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `009_step5_teacher_structures.sql` (once, after 001-008).
+- What changed:
+  - **Teachers** now see the **Structures** tab and can create and edit the structure (groups, assessments, maximums, final exam, formula, rounding) of the subjects they are assigned to, for the grade (and stream) they teach. Teachers of different sections of the same subject and grade share one structure; the editor says so.
+  - **Test assessments are allowed.** An assessment without marks can be changed or deleted freely. When marks exist, saving shows a confirmation that states how many marks and students are affected ("12 marks of 12 students will be deleted", "The results of 40 students will be recalculated") and nothing changes until the teacher confirms. Deleting a whole structure that has marks asks the same way. The counts include every section, not only the teacher's own.
+  - **Blocked cases:** a section that is finalized (any section the shared structure covers), a locked semester and a closed year cannot be changed by a teacher; the editor shows the reason. Only the director, vice director and system admin can reopen first. A maximum still cannot go below a mark already entered.
+  - **Database:** new `structure_edit_status` (one rule for who may change a structure), new write rules on the three structure tables, `save_assessment_structure` replaced (accepts an assigned teacher; refuses to delete marks without confirmation), new `delete_assessment_structure` and `structure_mark_counts`. Every save writes an audit line with the person's name and the number of marks deleted.
+  - **Unchanged:** unit leaders and registrars cannot edit structures; copying structures and the school settings (pass mark, rounding) stay with the system admin, director and vice director.
+- After running: sign in as a teacher who is assigned to a subject, open **Marks > Structures**, set up a structure, enter a test mark, then remove that assessment and check the confirmation message.
+- Tested: the SQL was run in order 001 to 009 on a local PostgreSQL and checked as a teacher, a second teacher, a unit leader and the system admin (assigned and unassigned subject, direct table writes, shared structure across two sections, finalized, locked semester, closed year, deletion with and without confirmation, audit lines). The app builds and `npm test` passes. The screens were not clicked through in a browser; test a real save on your Supabase first.
+
 ## Step 5 – Marks: configurable structures per semester, entry, results
 - Added: `supabase/migrations/008_step5_marks.sql`, `src/lib/marksEngine.js`, `src/lib/marksData.js`, `tests/marksEngine.test.js`, `src/pages/marks/` (MarksLayout, MarksParts, EntryPage, ResultsPage, StructuresPage, StructureEditor)
 - Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `package.json`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

@@ -71,6 +71,10 @@ Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expan
 - **Students > Import students**: download the template, fill it in (one row per student, dates of birth as Ethiopian `dd/mm/yyyy`, format that column as text in Excel), upload the CSV or .xlsx file, check the preview, then import. Download the results file to keep the new student IDs.
 - **Students > Section allocation**: propose, review, move students, approve.
 
+## Marks structures
+- The system admin, director and vice director set up the mark structure of every subject (**Marks > Structures**) and the school settings.
+- A **teacher** can set up and edit the structure of the subjects they are assigned to. Teachers of the same subject and grade share one structure. When an assessment already has marks, the system asks for confirmation before deleting marks or recalculating results. A finalized section, a locked semester or a closed year cannot be changed by a teacher.
+
 ## Giving staff a login
 1. In Supabase open **Authentication > Users > Add user**, enter the person's email and a password, and tick auto-confirm.
 2. In the app sign in as the system administrator, open **Staff**, open the person's record, and in **Login account** choose their email, pick a role and click **Link account**.
@@ -78,6 +82,7 @@ Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expan
 ## How security works
 - No role means no access. A new account can sign in but sees nothing until the system administrator gives it a role.
 - Only the system administrator, director and vice director assign teachers. Unit leaders cannot.
+- Only the system administrator, director and vice director change the mark structure of any subject; a teacher changes it only for subjects they are assigned to.
 - Teachers see and edit marks and attendance only for sections and subjects assigned to them.
 - Students are registered once. Each year they get an **enrollment** (year, grade, section, stream), so history is kept.
 - Every important change is recorded in `audit_log`.
