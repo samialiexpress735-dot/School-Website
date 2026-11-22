@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). Step 6 (attendance) is next.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). Step 6 (attendance) is next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
@@ -388,3 +388,31 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 - **Still to come, with the step that needs it:** highlight of a just-saved row, language cross-fade, dialogs and menus, attendance toggles and threshold pulse (Step 6), marks grid feedback and counting totals (Step 5), the left sidebar (after Step 6), stat tiles on the dashboard (as each step provides data).
 - **Done in Step 4:** the six-step registration form with progress bar and review, student cards on phones (the student list becomes cards), the section allocation board (drag and the "Move to" menu, live counts), and a step slide-in. Not yet done: a timeline beside the enrollment (the enrollment history is a table), counting animations on the board.
 - A future logo or official colors replace the palette by editing the tokens in 10.2; nothing else changes.
+
+### 10.9 Design review and polish update (lead-designer pass)
+
+**Question asked:** would the lead designer publish the system looking the way it did after Step 5? **Verdict: not yet.** The foundation was sound (consistent tokens, no unstyled classes, good accessibility basics, calm motion), but several things read as unfinished next to the promises in 10.1 to 10.4. This update fixes the ones that can be fixed safely with styling alone, and lists the rest as still to do.
+
+**Review method and its limit:** the repository was read in full (stylesheet, shell, login, dashboard, layouts, list pages), every CSS class used in the screens was checked to have a style (none missing), and the app was built and its tests run. The screens were **not** viewed in a browser in this review (no browser was available), so spacing is judged from the code and must be checked by eye on a real screen and phone before release.
+
+**Problems found, and what was done**
+
+| # | Problem | Fix (done in this update) |
+|---|---|---|
+| 1 | Working area limited to 56rem: tables, marks grids and the allocation board were squeezed on desktop | Content width raised to 72rem; padding reduced on phones |
+| 2 | No identity: the top bar and login were plain text because there is no logo yet | Working monogram tile (gold square with the school's first letter, "H" in English and "ሀ" in Amharic) on the top bar and login panel. It is a placeholder, not branding (section 8, item 6) |
+| 3 | Dashboard modules were one long list of identical rows | Responsive card grid; a teal top edge for ready modules, a gold edge for the rest; "Soon" modules shown quieter |
+| 4 | Buttons and fields were about 38 to 42 px high, below the 44 px promised in 10.3 | Minimum height 44 px for buttons, inputs and selects (the compact move menu on allocation cards and the mark cells are kept smaller on purpose) |
+| 5 | Tables looked flat; header barely separated from rows | Stronger header, light zebra rows, status row colors (error, warning) still take priority |
+| 6 | Page titles had no visual weight | Consistent title size with a short gold underline |
+| 7 | Panel headings sat directly on content | A thin rule under each panel heading |
+| 8 | No footer, pages ended abruptly | Footer with school name and city; the page body now fills the screen height |
+
+**Still to do (not in this update)**
+- Dashboard stat tiles (students, staff, sections) and friendly empty states with one clear action (10.4); they need data queries.
+- Left sidebar and breadcrumb (planned after Step 6).
+- Real logo and official colors, when the school decides (section 8, item 6).
+- A browser pass on a phone and an old school computer, in both languages, especially the six-step registration form, the allocation board and the marks grid.
+- A "skip to content" link and a print stylesheet for report cards (Step 7).
+
+**Files touched:** `src/styles.css` (new block at the end), `src/components/Shell.jsx` (footer), `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`. No database change.

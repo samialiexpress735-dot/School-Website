@@ -36,6 +36,9 @@ export default function Shell({ children, showNav }) {
       <main className="content page-enter" key={pageKey}>
         {children}
       </main>
+      <footer className="footer">
+        <strong>{t("school.name")}</strong> · {t("school.city")}
+      </footer>
     </div>
   );
 }

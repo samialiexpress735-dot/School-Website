@@ -329,3 +329,67 @@ td.center, th.center { text-align: center; }
 tfoot td { font-weight: 600; border-top: 2px solid rgba(0,0,0,.15); }
 .mark-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin: .75rem 0; }
 .mark-bar p { margin: 0; }
+
+/* ==========================================================================
+   UI polish update (docs/BLUEPRINT.md section 10.9)
+   Appended last on purpose: these rules refine the ones above.
+   ========================================================================== */
+
+/* Wider working area: tables, marks grids and the allocation board were squeezed into 56rem */
+.content { max-width: 72rem; }
+.content > h1 { font-size: clamp(1.5rem, 2.4vw, 1.9rem); margin-bottom: 0.25rem; }
+.content > h1::after { content: ""; display: block; width: 3rem; height: 4px; margin-top: 0.45rem; border-radius: 4px; background: var(--gold); }
+
+/* Working monogram (placeholder until the school has a real logo): gold tile with the first letter of the school name */
+.topbar-name { position: relative; padding-inline-start: 3.25rem; min-height: 2.5rem; justify-content: center; }
+.topbar-name::before {
+  content: "H"; position: absolute; inset-inline-start: 0; top: 50%; transform: translateY(-50%);
+  width: 2.5rem; height: 2.5rem; display: grid; place-items: center; border-radius: 10px;
+  background: var(--gold); color: var(--ink); font-weight: 700; font-size: 1.3rem; box-shadow: var(--shadow-sm);
+}
+html[lang="am"] .topbar-name::before { content: "ሀ"; }
+.login-side-inner::before {
+  content: "H"; display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; border-radius: 14px;
+  background: var(--gold); color: var(--ink); font-weight: 700; font-size: 1.9rem; box-shadow: var(--shadow-md);
+  animation: fadeUp 0.6s var(--ease) 0.25s both;
+}
+html[lang="am"] .login-side-inner::before { content: "ሀ"; }
+
+/* Dashboard: module cards in a responsive grid instead of one long list */
+.modules { grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+.module { flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.15rem 1.25rem; border-top: 4px solid var(--gold); }
+.module:has(.badge.ready) { border-top-color: var(--teal); }
+.module:not(:has(.badge.ready)) { background: var(--paper); box-shadow: none; }
+.module:not(:has(.badge.ready)) h3 { color: var(--muted); }
+
+/* Touch targets of at least 44px, as promised in blueprint 10.3 */
+.btn, .btn-small { min-height: 2.75rem; }
+.btn-small { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+input:not([type="checkbox"]):not([type="radio"]), select { min-height: 2.75rem; }
+.card-student select { min-height: 2.25rem; }
+.mark-input { min-height: 2.5rem; }
+
+/* Tables: clearer header, light zebra rows, status colors still win */
+thead th { font-weight: 700; letter-spacing: 0.02em; border-bottom: 2px solid var(--line); color: var(--ink); background: #f1f5f9; }
+tbody tr:nth-child(even) { background: #fafbfd; }
+tbody tr.row-bad { background: #fdf1ee; }
+tbody tr.row-warn { background: var(--cream); }
+tbody tr:hover { background: #eef6f6; }
+.panel { padding: 1.25rem 1.5rem; }
+.panel h2 { padding-bottom: 0.5rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+.panel-head h2 { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+
+/* Footer */
+.footer { border-top: 1px solid var(--line); padding: 1.25rem 1.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; background: var(--surface); }
+.footer strong { color: var(--ink); }
+
+/* Phones */
+@media (max-width: 640px) {
+  .topbar { padding: 0.6rem 1rem; }
+  .content { padding: 1.25rem 1rem 3rem; }
+  .panel { padding: 1rem; }
+  .modules { grid-template-columns: 1fr; }
+}
+
+.shell { display: flex; flex-direction: column; min-height: 100vh; }
+.shell > .content { flex: 1; width: 100%; }

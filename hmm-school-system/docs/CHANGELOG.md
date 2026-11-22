@@ -2,6 +2,14 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI polish update – lead-designer review
+- Added: nothing
+- Edited: `src/styles.css`, `src/components/Shell.jsx`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change.
+- What changed: wider working area (72rem); monogram tile on the top bar and login; dashboard modules as a card grid; 44 px minimum height for buttons and fields; clearer table headers with light zebra rows; page-title underline; panel heading rule; footer with the school name. Full list and the work still to do: blueprint section 10.9.
+- Tested: the app builds and `npm test` passes (15 tests). The screens were not viewed in a browser; please check them on a desktop and a phone, in English and Amharic, before relying on them.
+
 ## Step 5 update – Teachers edit the mark structure of their own subject
 - Added: `supabase/migrations/009_step5_teacher_structures.sql`
 - Edited: `src/lib/roles.js`, `src/pages/marks/StructuresPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
