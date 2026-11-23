@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 import EcDate from "../../components/EcDate.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 // All Monday-Friday dates from "from" to "to" (inclusive), as YYYY-MM-DD.
 function weekdaysBetween(from, to) {
@@ -20,6 +21,7 @@ function weekdaysBetween(from, to) {
 }
 
 export default function CalendarPage() {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const { profile } = useAuth();
   const editable = can(profile, STRUCTURE_EDITORS);
@@ -40,6 +42,7 @@ export default function CalendarPage() {
     () => (yearId ? supabase.from("school_calendar").select("*").eq("academic_year_id", yearId).order("calendar_date") : { data: [] }),
     [yearId]
   );
+  const flash = useRowFlash(days.data, yearId);
 
   async function add(e) {
     e.preventDefault();
@@ -58,7 +61,7 @@ export default function CalendarPage() {
   }
 
   async function remove(id) {
-    if (!window.confirm(t("common.confirmDelete"))) return;
+    if (!(await confirm({ title: t("dialog.deleteCalendar.title"), body: t("dialog.deleteCalendar.body"), confirmLabel: t("dialog.deleteCalendar.confirm"), tone: "danger" }))) return;
     const { error } = await supabase.from("school_calendar").delete().eq("id", id);
     error ? notice.fail(error) : (notice.ok(), days.reload());
   }
@@ -121,7 +124,7 @@ export default function CalendarPage() {
             </thead>
             <tbody>
               {days.data.map((d) => (
-                <tr key={d.id}>
+                <tr key={d.id} className={flash(d.id)}>
                   <td>{d.calendar_date}<EcDate value={d.calendar_date} /></td>
                   <td>{t(`calendar.kinds.${d.kind}`)}</td>
                   <td>{pick(d, lang)}</td>

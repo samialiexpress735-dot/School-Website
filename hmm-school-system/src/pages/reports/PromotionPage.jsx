@@ -6,6 +6,7 @@ import { fetchAll, fmt } from "../../lib/marksData.js";
 import { loadReport } from "../../lib/reportsData.js";
 import { needsStream, suggestDecision } from "../../lib/reports.js";
 import { useMarksRef } from "../marks/MarksParts.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 export default function PromotionPage() {
   const refQ = useMarksRef();
@@ -68,6 +69,7 @@ function Inner({ refData }) {
 }
 
 function Decisions({ refData, fromId, toId, gradeId, gradeSubjects }) {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const { notice, ok, fail, setNotice } = useNotice();
   const gradeNumber = refData.grades.find((g) => g.id === gradeId)?.number;
@@ -118,7 +120,8 @@ function Decisions({ refData, fromId, toId, gradeId, gradeSubjects }) {
 
   const save = async () => {
     if (missingStream.length) return fail(null, t("reports.promo.needStream", { n: missingStream.length }));
-    if (!window.confirm(t("reports.promo.confirm", { year: toYear?.label, promote: counts.promote, repeat: counts.repeat, graduate: counts.graduate }))) return;
+    const vars = { n: pending.length, year: toYear?.label, promote: counts.promote, repeat: counts.repeat, graduate: counts.graduate };
+    if (!(await confirm({ title: t("dialog.promotion.title", vars), body: t("dialog.promotion.body", vars), confirmLabel: t("dialog.promotion.confirm") }))) return;
     setSaving(true);
     setNotice(null);
     const items = pending.map((r) => ({

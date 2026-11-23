@@ -2,6 +2,21 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI v2, Part C – dialogs, saved-row highlight, unsaved changes and clearer errors
+- Added: `src/components/Dialogs.jsx`, `src/lib/rowflash.js`, `tests/rowflash.test.js`
+- Edited: `src/App.jsx`, `src/lib/ui.jsx`, `src/styles.css`, `src/i18n/en.js`, `src/i18n/am.js`, `src/pages/marks/EntryPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/pages/reports/PromotionPage.jsx`, `src/pages/staff/DepartmentsPage.jsx`, `src/pages/staff/StaffFormPage.jsx`, `src/pages/structure/CalendarPage.jsx`, `src/pages/structure/SectionsPage.jsx`, `src/pages/structure/SubjectsPage.jsx`, `src/pages/structure/YearsPage.jsx`, `src/pages/students/RegisterPage.jsx`, `src/pages/students/StudentParts.jsx`, `src/pages/students/StudentProfilePage.jsx`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change.
+- What changed:
+  - **Styled dialogs** replace all 13 plain browser confirm windows (delete section, calendar entry or guardian; close year; finalize or reopen marks; save or delete a mark structure; remove a login; change stream or status; create many sections; approve promotion). Each one names the action, says what changes, and has a button worded as the action. Dangerous ones start on Cancel. Escape or a tap outside cancels; focus stays in the dialog and returns afterwards.
+  - **Unsaved changes:** the registration form and the mark structure editor ask before a link inside the app (or closing the tab) loses typed data. Switching language does not ask.
+  - **Saved-row highlight:** an added or changed row glows gold for two seconds on academic years, calendar, subjects, sections and departments.
+  - **Messages:** errors have a close button and stay until closed. In registration step 1, names, sex and date of birth show their message under the field and focus moves to the first problem. The marks grid shows a green ring on a saved cell and a clear warning while any mark is not saved.
+  - English and Amharic texts for everything new. The Amharic wording is new and should be read by a native speaker.
+- After this update: try deleting a calendar entry or a section and cancel with Escape; finalize marks; start registering a student, type a name and click a menu item (you should be asked), then try the same with a language switch (you should not). Check the dialog on a phone in both languages.
+- Tested: `npm test` passes (46 tests, 5 new for the row highlight logic). The app builds; every dialog and message text exists in English and Amharic with the same placeholders. A browser simulation (jsdom, with a stand-in for the database) checked the real app: the delete dialog (alertdialog role, red primary button named for the action, focus on Cancel, Escape and Cancel delete nothing, focus returns to the opener, Tab stays inside, Confirm deletes), registration (inline errors, `aria-invalid` and linking, focus on the first problem, the message disappears when fixed, the leave-page dialog with Stay and Leave, no prompt when switching language or when the form is untouched), a failed save (error stays after 5 seconds and the close button removes it), and the highlight hook (no flash on first load or filter change, flashes changed and added rows, goes away). It was **not** run in a real browser: the look of the dialog on a phone, the gold highlight and the Back-button behaviour still need your check.
+- Next: Part D (the remaining animation) and Part E (phone and Amharic polish), after you have tried Part C.
+
 ## UI v2, Parts A and B – sidebar, breadcrumbs and role dashboards
 - Added: `src/components/NavIcon.jsx`, `src/components/Breadcrumbs.jsx`, `src/lib/nav.js`, `src/lib/recent.js`, `src/lib/dashboard.js`, `src/lib/dashboardData.js`, `tests/nav.test.js`, `tests/dashboard.test.js`
 - Edited: `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

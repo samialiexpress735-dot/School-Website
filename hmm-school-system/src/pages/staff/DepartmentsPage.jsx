@@ -2,10 +2,10 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, fullName, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, fullName, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS } from "../../lib/roles.js";
 
-function DepartmentRow({ dept, staff, editable, notice, onDone }) {
+function DepartmentRow({ dept, staff, editable, notice, onDone, flash }) {
   const { t, lang } = useLang();
   const [name, setName] = useState(dept.name);
   const [nameAm, setNameAm] = useState(dept.name_am || "");
@@ -17,7 +17,7 @@ function DepartmentRow({ dept, staff, editable, notice, onDone }) {
     error ? notice.fail(error) : (notice.ok(), onDone());
   }
   return (
-    <tr>
+    <tr className={flash}>
       <td><input aria-label={t("common.name")} value={name} onChange={(e) => setName(e.target.value)} disabled={!editable} /></td>
       <td><input aria-label={t("common.nameAm")} value={nameAm} onChange={(e) => setNameAm(e.target.value)} disabled={!editable} lang="am" /></td>
       <td>
@@ -46,6 +46,7 @@ export default function DepartmentsPage() {
     ]);
     return d.error ? d : s.error ? s : { data: { departments: d.data, staff: s.data } };
   }, []);
+  const flash = useRowFlash(data?.departments);
 
   async function add(e) {
     e.preventDefault();
@@ -77,7 +78,7 @@ export default function DepartmentsPage() {
           <thead><tr><th>{t("common.name")}</th><th>{t("common.nameAm")}</th><th>{t("departments.leader")}</th><th><span className="sr-only">{t("common.actions")}</span></th></tr></thead>
           <tbody>
             {data.departments.map((d) => (
-              <DepartmentRow key={`${d.id}-${d.name}-${d.name_am}-${d.leader_staff_id}`} dept={d} staff={data.staff} editable={editable} notice={notice} onDone={reload} />
+              <DepartmentRow key={`${d.id}-${d.name}-${d.name_am}-${d.leader_staff_id}`} flash={flash(d.id)} dept={d} staff={data.staff} editable={editable} notice={notice} onDone={reload} />
             ))}
           </tbody>
         </table>

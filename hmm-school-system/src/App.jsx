@@ -30,6 +30,7 @@ import StaffFormPage from "./pages/staff/StaffFormPage.jsx";
 import AssignmentsPage from "./pages/staff/AssignmentsPage.jsx";
 import DepartmentsPage from "./pages/staff/DepartmentsPage.jsx";
 import { LangProvider, LANGS, DEFAULT_LANG } from "./i18n/index.jsx";
+import { DialogProvider } from "./components/Dialogs.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
@@ -39,6 +40,7 @@ function LangRoutes() {
   if (!LANGS.includes(lang)) return <Navigate to={`/${DEFAULT_LANG}/dashboard`} replace />;
   return (
     <LangProvider lang={lang}>
+      <DialogProvider>
       <Routes>
         <Route path="login" element={<LoginPage />} />
         <Route path="dashboard" element={<Protected><DashboardPage /></Protected>} />
@@ -81,6 +83,7 @@ function LangRoutes() {
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </DialogProvider>
     </LangProvider>
   );
 }

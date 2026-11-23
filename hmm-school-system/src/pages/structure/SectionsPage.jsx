@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, SECTION_EDITORS } from "../../lib/roles.js";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -21,6 +22,7 @@ const byName = (a, b) => a.name.length - b.name.length || a.name.localeCompare(b
 const MANY = 30; // only a "did you mean this?" question above this number, never a limit
 
 export default function SectionsPage() {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const { profile } = useAuth();
   const editable = can(profile, SECTION_EDITORS);
@@ -52,6 +54,7 @@ export default function SectionsPage() {
     () => (yearId ? supabase.from("sections").select("*").eq("academic_year_id", yearId) : { data: [] }),
     [yearId]
   );
+  const flash = useRowFlash(sections.data, yearId);
 
   if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
@@ -66,7 +69,7 @@ export default function SectionsPage() {
     notice.clear();
     const n = Number(count);
     if (!Number.isInteger(n) || n < 1) return notice.fail(null, t("sections.invalidCount"));
-    if (n > MANY && !window.confirm(t("sections.manyConfirm", { n }))) return;
+    if (n > MANY && !(await confirm({ title: t("dialog.sectionsMany.title", { n }), body: t("dialog.sectionsMany.body", { n }), confirmLabel: t("dialog.sectionsMany.confirm", { n }) }))) return;
     const used = new Set(
       (sections.data || []).filter((s) => s.grade_id === grade.id && s.stream_id === stream.id && s.shift === shift).map((s) => s.name)
     );
@@ -90,7 +93,7 @@ export default function SectionsPage() {
   }
 
   async function remove(id) {
-    if (!window.confirm(t("common.confirmDelete"))) return;
+    if (!(await confirm({ title: t("dialog.deleteSection.title"), body: t("dialog.deleteSection.body"), confirmLabel: t("dialog.deleteSection.confirm"), tone: "danger" }))) return;
     const { error } = await supabase.from("sections").delete().eq("id", id);
     if (error) return notice.fail(error, error.message?.includes("has students") ? t("sections.blocked") : undefined);
     notice.ok();
@@ -161,7 +164,7 @@ export default function SectionsPage() {
             </thead>
             <tbody>
               {sorted.map((s) => (
-                <tr key={s.id}>
+                <tr key={s.id} className={flash(s.id)}>
                   <td>{pick(grades.find((g) => g.id === s.grade_id), lang)}</td>
                   <td>{pick(streams.find((x) => x.id === s.stream_id), lang)}</td>
                   <td>{t(`sections.shifts.${s.shift}`)}</td>

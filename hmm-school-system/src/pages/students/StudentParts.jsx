@@ -2,39 +2,50 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
 import EcDatePicker from "../../components/EcDatePicker.jsx";
+import { dobToGc } from "../../lib/studentForm.js";
 
-export function TextField({ id, label, value, onChange, required, disabled, type = "text", inputMode, lang, placeholder, min, max }) {
+// error: a message shown right under the field (and read out with it); empty means no error.
+export function TextField({ id, label, value, onChange, required, disabled, type = "text", inputMode, lang, placeholder, min, max, error }) {
   return (
     <div>
       <label htmlFor={id}>{label}{required ? " *" : ""}</label>
       <input id={id} type={type} inputMode={inputMode} lang={lang} value={value} placeholder={placeholder} min={min} max={max}
-        onChange={(e) => onChange(e.target.value)} disabled={disabled} required={required} />
+        onChange={(e) => onChange(e.target.value)} disabled={disabled} required={required}
+        aria-invalid={error ? "true" : undefined} aria-describedby={error ? `${id}-err` : undefined} />
+      {error && <p className="field-error" id={`${id}-err`}>{error}</p>}
     </div>
   );
 }
 
 // ---- Step 1: the student ----
-export function StudentStep({ f, setF, disabled }) {
+export function StudentStep({ f, setF, disabled, errors = [] }) {
   const { t } = useLang();
   const w = (k) => t(`students.wizard.${k}`);
   const set = (k) => (v) => setF((x) => ({ ...x, [k]: v }));
+  // a message shows only while that field is still wrong, so it disappears as soon as it is fixed
+  const nameErr = (v) => (errors.includes("names") && !String(v).trim() ? w("err.names") : "");
+  const sexErr = errors.includes("sex") && !f.sex ? w("err.sex") : "";
+  const dobErr = errors.includes("dob") && !dobToGc(f.dob) ? w("err.dob") : "";
   return (
     <div className="formgrid">
-      <TextField id="s_fn" label={w("firstName")} required value={f.first_name} onChange={set("first_name")} disabled={disabled} />
-      <TextField id="s_ln" label={w("fatherName")} required value={f.father_name} onChange={set("father_name")} disabled={disabled} />
-      <TextField id="s_gn" label={w("grandfatherName")} required value={f.grandfather_name} onChange={set("grandfather_name")} disabled={disabled} />
+      <TextField id="s_fn" label={w("firstName")} required value={f.first_name} onChange={set("first_name")} disabled={disabled} error={nameErr(f.first_name)} />
+      <TextField id="s_ln" label={w("fatherName")} required value={f.father_name} onChange={set("father_name")} disabled={disabled} error={nameErr(f.father_name)} />
+      <TextField id="s_gn" label={w("grandfatherName")} required value={f.grandfather_name} onChange={set("grandfather_name")} disabled={disabled} error={nameErr(f.grandfather_name)} />
       <TextField id="s_fna" label={w("firstNameAm")} lang="am" value={f.first_name_am} onChange={set("first_name_am")} disabled={disabled} />
       <TextField id="s_lna" label={w("fatherNameAm")} lang="am" value={f.father_name_am} onChange={set("father_name_am")} disabled={disabled} />
       <TextField id="s_gna" label={w("grandfatherNameAm")} lang="am" value={f.grandfather_name_am} onChange={set("grandfather_name_am")} disabled={disabled} />
       <div>
         <label htmlFor="s_sex">{w("sex")} *</label>
-        <select id="s_sex" value={f.sex} onChange={(e) => set("sex")(e.target.value)} disabled={disabled}>
+        <select id="s_sex" value={f.sex} onChange={(e) => set("sex")(e.target.value)} disabled={disabled}
+          aria-invalid={sexErr ? "true" : undefined} aria-describedby={sexErr ? "s_sex-err" : undefined}>
           <option value="">—</option>
           {["male", "female"].map((k) => <option key={k} value={k}>{t(`students.sexes.${k}`)}</option>)}
         </select>
+        {sexErr && <p className="field-error" id="s_sex-err">{sexErr}</p>}
       </div>
       <div className="full">
         <EcDatePicker id="s_dob" legend={w("dob")} required value={f.dob} onChange={set("dob")} disabled={disabled} />
+        {dobErr && <p className="field-error" id="s_dob-err" role="alert">{dobErr}</p>}
       </div>
       <TextField id="s_pob" label={w("placeOfBirth")} value={f.place_of_birth} onChange={set("place_of_birth")} disabled={disabled} />
       <TextField id="s_nat" label={w("nationality")} value={f.nationality} onChange={set("nationality")} disabled={disabled} />

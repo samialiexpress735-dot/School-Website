@@ -6,6 +6,7 @@ import en from "../../i18n/en.js";
 import am from "../../i18n/am.js";
 import { checkFormula, formulaNames, groupOutMax, groupRawMax, groupsOutMax } from "../../lib/marksEngine.js";
 import { fmt } from "../../lib/marksData.js";
+import { useConfirm, useUnsavedChanges } from "../../components/Dialogs.jsx";
 
 let seq = 0;
 const key = () => `k${++seq}`;
@@ -101,9 +102,11 @@ function calcSignature(d) {
 }
 
 export default function StructureEditor({ draft: initial, title, scopeText, context, readOnly, isAdmin, refData, subjectsForCopy, onClose, onSaved }) {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const notice = useNotice();
   const [d, setD] = useState(initial);
+  useUnsavedChanges(!readOnly && JSON.stringify(d) !== JSON.stringify(initial), "structure");
   const [busy, setBusy] = useState(false);
   const [showAdv, setShowAdv] = useState(Boolean(initial.formula));
   const [status, setStatus] = useState(null); // answer of the database: ok, finalized, semester_locked, not_assigned ...
@@ -177,7 +180,7 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
       if (c.data.marks > 0 && calcSignature(d) !== calcSignature(initial)) {
         lines.push(t("marks.editor.confirmRecalc", { students: c.data.students }));
       }
-      if (lines.length && !window.confirm([...lines, "", t("marks.editor.confirmAsk")].join("\n"))) { setBusy(false); return; }
+      if (lines.length && !(await confirm({ title: t("dialog.structureSave.title"), body: t("dialog.structureSave.body"), items: lines, footer: t("marks.editor.confirmAsk"), confirmLabel: t("dialog.structureSave.confirm"), tone: confirmDelete ? "danger" : "normal" }))) { setBusy(false); return; }
     }
 
     const payload = {
@@ -210,7 +213,7 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
     if (c.error) { setBusy(false); return notice.fail(c.error); }
     const withMarks = c.data.marks > 0;
     const text = withMarks ? t("marks.editor.confirmDeleteMarks", { marks: c.data.marks, students: c.data.students }) : t("marks.editor.confirmDelete");
-    if (!window.confirm(withMarks ? `${text}\n\n${t("marks.editor.confirmAsk")}` : text)) { setBusy(false); return; }
+    if (!(await confirm({ title: t("dialog.structureDelete.title"), body: withMarks ? text : t("dialog.structureDelete.body"), footer: withMarks ? t("marks.editor.confirmAsk") : undefined, confirmLabel: t("dialog.structureDelete.confirm"), tone: "danger" }))) { setBusy(false); return; }
     const r = await supabase.rpc("delete_assessment_structure", { p_id: d.id, p_confirm_delete_marks: withMarks });
     setBusy(false);
     if (r.error) return notice.fail(r.error);

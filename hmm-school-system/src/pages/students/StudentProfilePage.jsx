@@ -8,10 +8,12 @@ import { can, REGISTRARS, STREAM_CHANGERS } from "../../lib/roles.js";
 import { rowToForm, dobToGc, validateStep, EMPTY_STUDENT } from "../../lib/studentForm.js";
 import EcDate from "../../components/EcDate.jsx";
 import { StudentStep, ContactStep, PreviousStep, DocumentsBlock, TextField, RelationshipSelect } from "./StudentParts.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 const sectionKey = (streams, id) => streams.find((x) => x.id === id && x.code !== "general")?.id || null;
 
 function GuardianRow({ link, studentId, onDone, notice, editable, canRemove }) {
+  const confirm = useConfirm();
   const { t } = useLang();
   const g = link.guardians;
   const [v, setV] = useState({ full_name: g.full_name, phone: g.phone || "", occupation: g.occupation || "", address: g.address || "", relationship: link.relationship, is_primary: link.is_primary, is_emergency_contact: link.is_emergency_contact });
@@ -26,7 +28,7 @@ function GuardianRow({ link, studentId, onDone, notice, editable, canRemove }) {
     b.error ? notice.fail(b.error) : (notice.ok(), onDone());
   }
   async function remove() {
-    if (!window.confirm(t("common.confirmDelete"))) return;
+    if (!(await confirm({ title: t("dialog.deleteGuardian.title"), body: t("dialog.deleteGuardian.body"), confirmLabel: t("dialog.deleteGuardian.confirm"), tone: "danger" }))) return;
     const { error } = await supabase.from("student_guardians").delete().eq("student_id", studentId).eq("guardian_id", g.id);
     error ? notice.fail(error, error.message?.includes("at least one") ? t("students.profile.lastGuardian") : undefined) : (notice.ok(), onDone());
   }
@@ -57,6 +59,7 @@ function GuardianRow({ link, studentId, onDone, notice, editable, canRemove }) {
 }
 
 function EnrollmentRow({ e, refData, sections, editable, canStream, notice, onDone }) {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const grade = refData.grades.find((g) => g.id === e.grade_id);
   const stream = refData.streams.find((s) => s.id === e.stream_id);
@@ -67,7 +70,8 @@ function EnrollmentRow({ e, refData, sections, editable, canStream, notice, onDo
     error ? notice.fail(error) : (notice.ok(), onDone());
   }
   async function changeStream(streamId) {
-    if (!streamId || streamId === e.stream_id || !window.confirm(t("students.profile.streamNote"))) return;
+    if (!streamId || streamId === e.stream_id) return;
+    if (!(await confirm({ title: t("dialog.stream.title"), body: t("students.profile.streamNote"), confirmLabel: t("dialog.stream.confirm"), tone: "danger" }))) return;
     const { error } = await supabase.rpc("change_student_stream", { p_enrollment: e.id, p_stream: streamId });
     error ? notice.fail(error) : (notice.ok(), onDone());
   }
@@ -97,6 +101,7 @@ function EnrollmentRow({ e, refData, sections, editable, canStream, notice, onDo
 }
 
 export default function StudentProfilePage() {
+  const confirm = useConfirm();
   const { id } = useParams();
   const { t, lang } = useLang();
   const { profile } = useAuth();
@@ -180,7 +185,8 @@ export default function StudentProfilePage() {
   const enrSections = sections.filter((x) => x.academic_year_id === enr.yearId && x.grade_id === enr.gradeId && sectionKey(streams, x.stream_id) === sectionKey(streams, gradeSel && gradeSel.number <= 10 ? null : enr.streamId));
 
   async function changeStatus() {
-    if (newStatus === s.status || !window.confirm(t("students.profile.confirmStatus"))) return;
+    if (newStatus === s.status) return;
+    if (!(await confirm({ title: t("dialog.status.title"), body: t("dialog.status.body"), confirmLabel: t("dialog.status.confirm"), tone: "danger" }))) return;
     const { error } = await supabase.rpc("set_student_status", { p_student: id, p_status: newStatus });
     error ? notice.fail(error) : (notice.ok(), reloadAll());
   }

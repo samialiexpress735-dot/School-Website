@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLang } from "../i18n/index.jsx";
+import { changedIds } from "./rowflash.js";
 
 // Runs a Supabase query and gives back { data, error, loading, reload }.
 // fn must return { data, error } like Supabase does.
@@ -36,12 +37,16 @@ export function useNotice() {
     setNotice({ type: "ok", text: t("common.saved") });
     timer.current = setTimeout(() => setNotice(null), 5000);
   }, [t]);
+  const dismiss = useCallback(() => {
+    clearTimeout(timer.current);
+    setNotice(null);
+  }, []);
   const fail = useCallback(
     (err, custom) => {
       clearTimeout(timer.current);
-      setNotice({ type: "error", text: custom || t("common.saveFailed", { detail: err?.message || "" }) });
+      setNotice({ type: "error", text: custom || t("common.saveFailed", { detail: err?.message || "" }), dismiss });
     },
-    [t]
+    [t, dismiss]
   );
   const clear = useCallback(() => {
     clearTimeout(timer.current);
@@ -54,9 +59,46 @@ export function Notice({ notice }) {
   if (!notice) return null;
   return (
     <p className={notice.type === "ok" ? "flash ok" : "flash error"} role={notice.type === "ok" ? "status" : "alert"}>
-      {notice.text}
+      <span>{notice.text}</span>
+      {notice.type === "error" && notice.dismiss && <DismissButton onClick={notice.dismiss} />}
     </p>
   );
+}
+
+// A small "x" that closes an error message (errors stay until the person closes them).
+function DismissButton({ onClick }) {
+  const { t } = useLang();
+  return (
+    <button type="button" className="flash-close" onClick={onClick} aria-label={t("common.dismiss")}>
+      <span aria-hidden="true">×</span>
+    </button>
+  );
+}
+
+// Highlights, for a moment, the rows that were added or changed since the list was last loaded.
+//   const flash = useRowFlash(list, scopeKey);   <tr className={flash(row.id)}>
+// The first load never flashes, and neither does a change of scopeKey (for example another year in a filter).
+export function useRowFlash(rows, scopeKey = "") {
+  const prev = useRef(null);
+  const scope = useRef(scopeKey);
+  const timer = useRef(null);
+  const [ids, setIds] = useState(() => new Set());
+  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    if (!Array.isArray(rows)) return;
+    if (scope.current !== scopeKey) {
+      scope.current = scopeKey;
+      prev.current = null;
+    }
+    const { ids: changed, next } = changedIds(prev.current, rows);
+    prev.current = next;
+    if (changed.size) {
+      setIds(changed);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setIds(new Set()), 2000);
+    }
+  }, [rows, scopeKey]);
+  return (id) => (ids.has(id) ? "just-saved" : "");
 }
 
 // Calm placeholder bars shown while data loads (replaces a plain "Loading…" line).

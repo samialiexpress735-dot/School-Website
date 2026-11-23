@@ -2,9 +2,10 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 import EcDate from "../../components/EcDate.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 function SemesterRow({ sem, editable, onDone, notice }) {
   const { t } = useLang();
@@ -49,6 +50,7 @@ function SemesterRow({ sem, editable, onDone, notice }) {
 }
 
 export default function YearsPage() {
+  const confirm = useConfirm();
   const { t } = useLang();
   const { profile } = useAuth();
   const editable = can(profile, STRUCTURE_EDITORS);
@@ -66,6 +68,7 @@ export default function YearsPage() {
     if (s.error) return s;
     return { data: { years: y.data, semesters: s.data } };
   }, []);
+  const flash = useRowFlash(data?.years);
 
   async function addYear(e) {
     e.preventDefault();
@@ -94,8 +97,8 @@ export default function YearsPage() {
     err ? notice.fail(err) : (notice.ok(), reload());
   }
   const setCurrent = (id) => run(supabase.rpc("set_current_year", { p_year: id }));
-  const toggleClosed = (y) => {
-    if (!y.is_closed && !window.confirm(t("years.confirmClose"))) return;
+  const toggleClosed = async (y) => {
+    if (!y.is_closed && !(await confirm({ title: t("dialog.closeYear.title"), body: t("dialog.closeYear.body"), confirmLabel: t("dialog.closeYear.confirm"), tone: "danger" }))) return;
     run(supabase.from("academic_years").update({ is_closed: !y.is_closed }).eq("id", y.id));
   };
 
@@ -131,7 +134,7 @@ export default function YearsPage() {
 
       {data.years.length === 0 && <p>{t("common.noData")}</p>}
       {data.years.map((y) => (
-        <section key={y.id} className="panel">
+        <section key={y.id} className={`panel ${flash(y.id)}`}>
           <div className="panel-head">
             <h2>
               {y.label} {y.is_current && <span className="pill gold">{t("common.current")}</span>}{" "}

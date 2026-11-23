@@ -532,3 +532,41 @@ a.stat:hover, a.stat:focus-visible { transform: translateY(-2px); box-shadow: va
   .sidebar, .scrim, .breadcrumb, .menu-btn { display: none !important; }
   .frame { display: block; }
 }
+
+/* ==========================================================================
+   UI v2, Part C: dialogs, saved-row highlight, dismissible messages, inline errors
+   ========================================================================== */
+.modal-open { overflow: hidden; }
+.dialog-scrim { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 1rem; background: rgba(15, 46, 77, 0.5); animation: scrimIn var(--t-base) var(--ease) both; }
+.dialog { width: min(32rem, 100%); max-height: calc(100vh - 2rem); overflow-y: auto; background: var(--surface); border-radius: var(--radius); border-top: 6px solid var(--gold); box-shadow: var(--shadow-md); padding: 1.25rem 1.5rem 1.25rem; animation: dialogIn var(--t-base) var(--ease) both; }
+.dialog.danger { border-top-color: var(--terracotta); }
+.dialog h2 { margin: 0 0 0.6rem; font-size: 1.2rem; }
+.dialog-body p { margin: 0 0 0.6rem; }
+.dialog-body ul { margin: 0 0 0.75rem; padding-inline-start: 1.2rem; }
+.dialog-body li { margin-bottom: 0.25rem; }
+.dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
+.btn-small.danger-solid { background: var(--terracotta); color: #fff; }
+.btn-small.danger-solid:hover { background: #9c3524; }
+@keyframes scrimIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialogIn { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 480px) { .dialog-actions { flex-direction: column-reverse; } .dialog-actions .btn-small { width: 100%; } }
+
+/* A row that was just added or changed glows gold for about two seconds (one short paint, only that row) */
+@keyframes justSaved { 0%, 35% { background-color: #fdeeb8; } 100% { background-color: transparent; } }
+tr.just-saved > td, .just-saved { animation: justSaved 2s ease-out backwards; }
+
+/* Error messages can be closed; they stay until then */
+.flash { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
+.flash ul { flex-basis: 100%; }
+.flash-close { flex: none; width: 2rem; height: 2rem; margin: -0.25rem -0.4rem 0 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.flash-close:hover { background: rgba(0, 0, 0, 0.08); }
+
+/* A mark that was just saved */
+@keyframes markSaved { 0%, 40% { box-shadow: 0 0 0 3px rgba(31, 107, 74, 0.55); } 100% { box-shadow: 0 0 0 3px rgba(31, 107, 74, 0); } }
+.mark-input.saved { animation: markSaved 1.4s ease-out both; border-color: var(--forest); }
+.mark-saved-tick { color: var(--forest); font-weight: 700; margin-inline-start: 0.25rem; }
+
+/* Message beside the field it is about */
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--terracotta); box-shadow: 0 0 0 1px var(--terracotta); }
+.field-error { margin: 0.3rem 0 0; color: var(--danger); font-size: 0.9rem; font-weight: 700; animation: flashIn var(--t-base) var(--ease) both; }
+.flash.error a.err-link { color: inherit; text-decoration: underline; }

@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS, ALL_ROLES } from "../../lib/roles.js";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 const EMPTY = {
   employee_id: "", staff_type: "teaching", position: "",
@@ -16,6 +17,7 @@ const EMPTY = {
 const TEXT_FIELDS = Object.keys(EMPTY);
 
 function AccountPanel({ staff, onChanged }) {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const { session, profile } = useAuth();
   const isAdmin = profile?.role === "system_admin";
@@ -67,7 +69,7 @@ function AccountPanel({ staff, onChanged }) {
     error ? notice.fail(error) : (notice.ok(), accounts.reload());
   }
   async function unlink() {
-    if (!window.confirm(t("staff.account.confirmUnlink"))) return;
+    if (!(await confirm({ title: t("dialog.unlink.title"), body: t("dialog.unlink.body"), confirmLabel: t("dialog.unlink.confirm"), tone: "danger" }))) return;
     const a = await supabase.from("profiles").update({ role: null }).eq("id", staff.profile_id);
     if (a.error) return notice.fail(a.error);
     const b = await supabase.from("staff").update({ profile_id: null }).eq("id", staff.id);

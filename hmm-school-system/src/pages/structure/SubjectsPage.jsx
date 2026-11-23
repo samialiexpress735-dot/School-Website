@@ -2,10 +2,10 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, pick, Loading } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, pick, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 
-function SubjectRow({ subject, editable, onDone, notice }) {
+function SubjectRow({ subject, editable, onDone, notice, flash }) {
   const { t } = useLang();
   const [code, setCode] = useState(subject.code);
   const [name, setName] = useState(subject.name);
@@ -21,7 +21,7 @@ function SubjectRow({ subject, editable, onDone, notice }) {
   }
 
   return (
-    <tr>
+    <tr className={flash}>
       <td><input aria-label={t("common.code")} value={code} onChange={(e) => setCode(e.target.value)} disabled={!editable} className="narrow" /></td>
       <td><input aria-label={t("common.name")} value={name} onChange={(e) => setName(e.target.value)} disabled={!editable} /></td>
       <td><input aria-label={t("common.nameAm")} value={nameAm} onChange={(e) => setNameAm(e.target.value)} disabled={!editable} lang="am" /></td>
@@ -184,6 +184,7 @@ export default function SubjectsPage() {
   const [nameAm, setNameAm] = useState("");
 
   const subjects = useQuery(() => supabase.from("subjects").select("*").order("name"), []);
+  const flash = useRowFlash(subjects.data);
 
   async function add(e) {
     e.preventDefault();
@@ -219,7 +220,7 @@ export default function SubjectsPage() {
           <thead><tr><th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("common.nameAm")}</th><th>{t("common.active")}</th><th><span className="sr-only">{t("common.actions")}</span></th></tr></thead>
           <tbody>
             {subjects.data.map((s) => (
-              <SubjectRow key={`${s.id}-${s.updated_at ?? ""}-${s.code}-${s.name}-${s.name_am}-${s.is_active}`} subject={s} editable={editable} onDone={subjects.reload} notice={notice} />
+              <SubjectRow key={`${s.id}-${s.updated_at ?? ""}-${s.code}-${s.name}-${s.name_am}-${s.is_active}`} flash={flash(s.id)} subject={s} editable={editable} onDone={subjects.reload} notice={notice} />
             ))}
           </tbody>
         </table>

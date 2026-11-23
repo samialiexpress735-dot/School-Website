@@ -5,6 +5,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError, pick } from "../../lib/ui.jsx";
 import { EMPTY_STUDENT, EMPTY_GUARDIAN, validateStep, validateAll, buildPayload, dobToGc } from "../../lib/studentForm.js";
 import { ageOn, ageWarning, DEFAULT_AGE_LIMITS } from "../../lib/age.js";
+import { useUnsavedChanges } from "../../components/Dialogs.jsx";
 import { StudentStep, ContactStep, PreviousStep, DocumentsBlock, GuardiansStep } from "./StudentParts.jsx";
 
 const STEPS = ["student", "contact", "guardians", "previous", "other", "review"];
@@ -23,6 +24,18 @@ export default function RegisterPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [done, setDone] = useState(null);
+
+  // Leaving with a half-filled form asks first (a link inside the app, closing or refreshing the tab).
+  const startedGuardians = JSON.stringify([{ ...EMPTY_GUARDIAN, is_primary: true }]);
+  const dirty = !done && !saving && (JSON.stringify(f) !== JSON.stringify(EMPTY_STUDENT) || JSON.stringify(guardians) !== startedGuardians);
+  useUnsavedChanges(dirty, "register");
+
+  // After a failed "Next", move focus to the first field that needs attention (or to the message).
+  useEffect(() => {
+    if (!errors.length) return;
+    const el = document.querySelector('.step-enter [aria-invalid="true"]') || document.querySelector(".step-enter .flash.error");
+    el?.focus?.();
+  }, [errors]);
 
   const ref = useQuery(async () => {
     const [y, g, s, a] = await Promise.all([
@@ -168,13 +181,13 @@ export default function RegisterPage() {
         <h2>{w("stepOf", { n: step + 1, total: STEPS.length, name: w(`steps.${STEPS[step]}`) })}</h2>
 
         {errors.length > 0 && (
-          <div className="flash error" role="alert">
+          <div className="flash error" role="alert" tabIndex={-1}>
             <strong>{w("fix")}</strong>
             <ul>{errors.map((k) => <li key={k}>{w(`err.${k}`)}</li>)}</ul>
           </div>
         )}
 
-        {step === 0 && <StudentStep f={f} setF={setF} />}
+        {step === 0 && <StudentStep f={f} setF={setF} errors={errors} />}
         {step === 1 && <ContactStep f={f} setF={setF} />}
         {step === 2 && <GuardiansStep guardians={guardians} setGuardians={setGuardians} />}
         {step === 3 && <PreviousStep f={f} setF={setF} />}

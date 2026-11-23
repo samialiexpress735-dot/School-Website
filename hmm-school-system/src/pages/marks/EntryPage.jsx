@@ -12,6 +12,7 @@ import {
   fetchAll, fmt, loadMarks, loadStructures, markKey, scoresForStudent, sortSections, subjectsOfGrade,
 } from "../../lib/marksData.js";
 import { useMarksRef, useYearSemester, YearSemesterPicker, sectionLabel } from "./MarksParts.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
 
 export default function EntryPage() {
   const refQ = useMarksRef();
@@ -192,6 +193,7 @@ function Grid({ refData, year, semester, section, subject, canTeach, isAdmin }) 
 }
 
 function GridBody({ refData, year, semester, section, subject, structure, enrollments, initialLock, initialMarks, canTeach, isAdmin, reload }) {
+  const confirm = useConfirm();
   const { t, lang } = useLang();
   const { profile } = useAuth();
   const notice = useNotice();
@@ -199,6 +201,7 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
   const [drafts, setDrafts] = useState({});
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(0);
+  const [justSaved, setJustSaved] = useState({}); // cells saved a moment ago
   const [busy, setBusy] = useState(false);
   const marksRef = useRef(marks);
   marksRef.current = marks;
@@ -249,7 +252,11 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
     }
     setSaving((n) => n - 1);
     if (failed) setErrors((x) => ({ ...x, [key]: t("marks.entry.couldNotChange") }));
-    else clearDraft();
+    else {
+      clearDraft();
+      setJustSaved((x) => ({ ...x, [key]: true }));
+      setTimeout(() => setJustSaved((x) => { const n = { ...x }; delete n[key]; return n; }), 1500);
+    }
   }
 
   function moveDown(ev, rowIdx, colIdx) {
@@ -262,7 +269,8 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
 
   async function finalize() {
     const missing = total - entered;
-    if (!window.confirm(missing > 0 ? t("marks.entry.confirmFinalizeMissing", { n: missing }) : t("marks.entry.confirmFinalize"))) return;
+    const k = missing > 0 ? "finalizeMissing" : "finalize";
+    if (!(await confirm({ title: t(`dialog.${k}.title`), body: t(`dialog.${k}.body`, { n: missing }), confirmLabel: t(`dialog.${k}.confirm`) }))) return;
     setBusy(true);
     const r = await supabase.from("mark_locks").insert({ semester_id: semester.id, section_id: section.id, subject_id: subject.id });
     setBusy(false);
@@ -270,7 +278,7 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
     reload();
   }
   async function reopen() {
-    if (!window.confirm(t("marks.entry.confirmReopen"))) return;
+    if (!(await confirm({ title: t("dialog.reopen.title"), body: t("dialog.reopen.body"), confirmLabel: t("dialog.reopen.confirm") }))) return;
     setBusy(true);
     const r = await supabase.from("mark_locks").delete().eq("id", lock.id);
     setBusy(false);
@@ -294,8 +302,8 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
         </p>
       )}
       <div className="mark-bar">
-        <p className="small" role="status" aria-live="polite">
-          {t("marks.entry.counts", { entered, total })} · {saving > 0 ? t("marks.entry.saving") : hasErr ? "" : t("marks.entry.allSaved")}
+        <p className={hasErr ? "small msg-err" : "small"} role="status" aria-live="polite">
+          {t("marks.entry.counts", { entered, total })} · {saving > 0 ? t("marks.entry.saving") : hasErr ? t("marks.entry.hasErrors") : t("marks.entry.allSaved")}
         </p>
         <div className="row-actions">
           {canLock && !locked && !year.is_closed && (
@@ -341,7 +349,7 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
                     return (
                       <td key={c.id} className="center">
                         <input
-                          className={err ? "mark-input bad" : "mark-input"}
+                          className={err ? "mark-input bad" : justSaved[key] ? "mark-input saved" : "mark-input"}
                           inputMode="decimal"
                           autoComplete="off"
                           size={5}
