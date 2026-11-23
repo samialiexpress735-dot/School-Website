@@ -21,7 +21,7 @@ function Inner({ refData }) {
   const { t } = useLang();
   const ys = useYearSemester(refData);
   const scope = useSectionScope(refData, ys.yearId, { wholeOnly: true });
-  if (scope.loading) return <Loading />;
+  if (scope.loading) return <Loading shape="table" rows={8} />;
   if (scope.error) return <LoadError />;
   return (
     <section className="panel">

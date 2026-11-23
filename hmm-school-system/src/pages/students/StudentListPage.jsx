@@ -121,7 +121,7 @@ export default function StudentListPage() {
       </div>
       {badId && <p className="flash warn" role="status">{t("students.list.badId")}</p>}
 
-      {list.loading ? <Loading /> : list.error ? <LoadError /> : list.data.rows.length === 0 ? (
+      {list.loading ? <Loading shape="table" rows={8} /> : list.error ? <LoadError /> : list.data.rows.length === 0 ? (
         <div className="empty">
           <p>{q || gradeId || sectionId || status ? t("students.list.empty") : t("students.list.emptyFirst")}</p>
           {writer && !q && <Link className="btn-small linkbtn" to={`/${lang}/students/new`}>{t("students.tabs.register")}</Link>}

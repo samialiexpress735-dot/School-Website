@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { useLang } from "../i18n/index.jsx";
 import { changedIds } from "./rowflash.js";
+import { DURATION, countStep, glideDeltas, reducedMotion } from "./motion.js";
 
 // Runs a Supabase query and gives back { data, error, loading, reload }.
 // fn must return { data, error } like Supabase does.
@@ -101,17 +102,135 @@ export function useRowFlash(rows, scopeKey = "") {
   return (id) => (ids.has(id) ? "just-saved" : "");
 }
 
-// Calm placeholder bars shown while data loads (replaces a plain "Loading…" line).
-export function Loading() {
+// Calm placeholder shown while data loads (replaces a plain "Loading…" line).
+// shape: "lines" (default), "table" (a header and rows), "cards" (a grid of cards) or "form" (labels and fields),
+// so the placeholder has the same outline as what is about to appear.
+export function Loading({ shape = "lines", rows = 5 }) {
   const { t } = useLang();
   return (
-    <div className="skeleton" role="status" aria-live="polite">
+    <div className={`skeleton sk-${shape}`} role="status" aria-live="polite">
       <span className="sr-only">{t("common.loading")}</span>
-      <div className="sk-line w60" />
-      <div className="sk-line" />
-      <div className="sk-line w80" />
+      {shape === "table" && (
+        <>
+          <div className="sk-row sk-head" aria-hidden="true"><span className="sk-line" /><span className="sk-line" /><span className="sk-line" /></div>
+          {Array.from({ length: rows }, (_, i) => (
+            <div className="sk-row" key={i} aria-hidden="true" style={{ "--i": i }}><span className="sk-line" /><span className="sk-line" /><span className="sk-line" /></div>
+          ))}
+        </>
+      )}
+      {shape === "cards" && (
+        <div className="sk-grid" aria-hidden="true">
+          {Array.from({ length: rows }, (_, i) => <div className="sk-card" key={i} style={{ "--i": i }} />)}
+        </div>
+      )}
+      {shape === "form" && (
+        <div aria-hidden="true">
+          {Array.from({ length: rows }, (_, i) => (
+            <div className="sk-field" key={i}><span className="sk-line w30" /><span className="sk-box" /></div>
+          ))}
+        </div>
+      )}
+      {shape === "lines" && (
+        <>
+          <div className="sk-line w60" />
+          <div className="sk-line" />
+          <div className="sk-line w80" />
+        </>
+      )}
     </div>
   );
+}
+
+// A number that moves to its new value instead of jumping (marks totals, counts on the allocation board).
+// The first value is shown as is. Screen readers get the final value only, never the numbers on the way.
+export function CountTo({ value, decimals = 0, format }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  const raf = useRef(0);
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    const start = from.current;
+    if (!Number.isFinite(start) || !Number.isFinite(value) || start === value || reducedMotion()) {
+      from.current = value;
+      setShown(value);
+      return undefined;
+    }
+    const t0 = performance.now();
+    const tick = () => {
+      const p = (performance.now() - t0) / DURATION.slow;
+      const v = countStep(start, value, p, decimals);
+      from.current = v;
+      setShown(v);
+      if (p < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [value, decimals]);
+  const text = (v) => (format ? format(v) : String(v));
+  return (
+    <>
+      <span aria-hidden="true">{text(shown)}</span>
+      <span className="sr-only">{text(value)}</span>
+    </>
+  );
+}
+
+// Gives a changing value a small "nudge" class for a moment, but only when it really changes (not on first show).
+//   <span key={nudge.key} className={nudge.className}>
+export function useNudge(value) {
+  const prev = useRef(value);
+  const n = useRef(0);
+  if (prev.current !== value) {
+    prev.current = value;
+    n.current += 1;
+  }
+  return { key: n.current, className: n.current > 0 ? "nudge" : "" };
+}
+
+// Makes items glide to their new place when a list is rearranged (FLIP): mark each item with data-glide="<id>"
+// inside the container. Uses transform only, and does nothing when the person prefers less motion.
+export function useGlide(containerRef, signature) {
+  const before = useRef(new Map());
+  const measure = () => {
+    const m = new Map();
+    containerRef.current?.querySelectorAll("[data-glide]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      m.set(el.getAttribute("data-glide"), { left: r.left, top: r.top });
+    });
+    return m;
+  };
+  useLayoutEffect(() => {
+    const next = measure();
+    if (!reducedMotion() && before.current.size) {
+      const deltas = glideDeltas(before.current, next);
+      deltas.forEach(({ dx, dy }, id) => {
+        const el = containerRef.current?.querySelector(`[data-glide="${CSS.escape(id)}"]`);
+        el?.animate?.([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: DURATION.base, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" });
+      });
+    }
+    before.current = next;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+  // Scrolling or resizing moves everything on screen without a rearrangement; keep the saved positions current
+  // so that scrolling is never mistaken for a move (throttled to one measurement per frame).
+  useEffect(() => {
+    let raf = 0;
+    const remeasure = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => { before.current = measure(); });
+    };
+    const el = containerRef.current;
+    el?.addEventListener("scroll", remeasure, { capture: true, passive: true });
+    window.addEventListener("scroll", remeasure, { passive: true });
+    window.addEventListener("resize", remeasure);
+    return () => {
+      cancelAnimationFrame(raf);
+      el?.removeEventListener("scroll", remeasure, true);
+      window.removeEventListener("scroll", remeasure);
+      window.removeEventListener("resize", remeasure);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 export function LoadError() {

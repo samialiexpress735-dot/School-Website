@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, Loading, LoadError, pick, fullName } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, Loading, LoadError, useNudge, pick, fullName } from "../../lib/ui.jsx";
+import { newlyFlagged } from "../../lib/motion.js";
 import { formatEc } from "../../lib/ethiopian.js";
 import { can, ATTENDANCE_ADMINS, ATTENDANCE_TAKERS } from "../../lib/roles.js";
 import {
@@ -128,6 +129,7 @@ function Sheet({ refData, year, section, date, today, calendar, editDays, defaul
   const { profile } = useAuth();
   const notice = useNotice(); // lives here so "Saved." survives the reload that follows a save
   const semester = semesterOfDate(refData.semesters, year.id, date);
+  const flaggedRef = useRef(null); // who was at the limit before the last reload (null = first load, nothing pulses)
 
   const q = useQuery(async () => {
     const st = await loadSectionStudents(section.id, year.id);
@@ -148,7 +150,7 @@ function Sheet({ refData, year, section, date, today, calendar, editDays, defaul
     return { data: { students: st.data, records: records.data, summary: summary.data, stamp: Date.now() }, error: null };
   }, [section.id, year.id, date]);
 
-  if (q.loading && !q.data) return <Loading />;
+  if (q.loading && !q.data) return <Loading shape="table" rows={8} />;
   if (q.error || !q.data) return <LoadError />;
   const { students, records, summary, stamp } = q.data;
 
@@ -170,6 +172,7 @@ function Sheet({ refData, year, section, date, today, calendar, editDays, defaul
       students={students}
       records={records}
       summary={summary}
+      flaggedRef={flaggedRef}
       notice={notice}
       readOnlyReason={readOnlyReason}
       canSetThreshold={!year.is_closed && (isAdmin || homeroom)}
@@ -180,7 +183,7 @@ function Sheet({ refData, year, section, date, today, calendar, editDays, defaul
   );
 }
 
-function Body({ year, section, date, students, records, summary, notice, readOnlyReason, canSetThreshold, defaultThreshold, reload, onSectionChanged }) {
+function Body({ year, section, date, students, records, summary, flaggedRef, notice, readOnlyReason, canSetThreshold, defaultThreshold, reload, onSectionChanged }) {
   const { t, lang } = useLang();
   const taken = records.length > 0;
   const sorted = useMemo(() => [...students].sort(byName(lang, fullName)), [students, lang]);
@@ -195,6 +198,11 @@ function Body({ year, section, date, students, records, summary, notice, readOnl
   const readOnly = Boolean(readOnlyReason);
   const sumById = useMemo(() => new Map(summary.map((s) => [s.enrollment_id, s])), [summary]);
   const threshold = summary[0]?.threshold ?? section.absence_threshold ?? defaultThreshold;
+
+  // One gentle pulse for a student who has just reached the limit (not for those already there when the page opened)
+  const flaggedNow = useMemo(() => new Set(summary.filter((x) => x.flagged).map((x) => x.enrollment_id)), [summary]);
+  const pulse = useMemo(() => newlyFlagged(flaggedRef.current, flaggedNow), [flaggedNow]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { flaggedRef.current = flaggedNow; }, [flaggedNow, flaggedRef]);
 
   const counts = tally(rows);
   const changes = changedRows(rows, initial, taken);
@@ -231,9 +239,7 @@ function Body({ year, section, date, students, records, summary, notice, readOnl
       <div className="mark-bar">
         <p className="roll-counts" aria-live="polite">
           {STATUSES.map((s) => (
-            <span key={s} className={`pill ${s === "present" ? "ok" : s === "absent" ? "warn" : s === "late" ? "gold" : "info"}`}>
-              {t(`attendance.status.${s}`)}: {counts[s]}
-            </span>
+            <CountPill key={s} tone={s === "present" ? "ok" : s === "absent" ? "warn" : s === "late" ? "gold" : "info"} n={counts[s]} label={t(`attendance.status.${s}`)} />
           ))}
         </p>
         {!readOnly && (
@@ -247,7 +253,7 @@ function Body({ year, section, date, students, records, summary, notice, readOnl
           const s = sumById.get(e.id);
           const flagged = Boolean(s?.flagged);
           return (
-            <li key={e.id} className={`roll-row${flagged ? " flagged" : ""}`}>
+            <li key={e.id} className={`roll-row${flagged ? " flagged" : ""}${pulse.has(e.id) ? " pulse" : ""}`}>
               <div className="roll-who">
                 <span className="nm">{fullName(e.students, lang)}</span>
                 <span className="small muted code-small">{e.students.student_code}</span>
@@ -300,6 +306,12 @@ function Body({ year, section, date, students, records, summary, notice, readOnl
       )}
     </>
   );
+}
+
+// A status count that gives a small nudge when its number changes (not when the sheet first opens).
+function CountPill({ tone, n, label }) {
+  const nudge = useNudge(n);
+  return <span key={nudge.key} className={`pill ${tone} ${nudge.className}`}>{label}: {n}</span>;
 }
 
 function ThresholdBox({ section, threshold, defaultThreshold, onChanged }) {

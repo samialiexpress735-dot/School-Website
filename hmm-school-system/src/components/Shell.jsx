@@ -4,6 +4,7 @@ import { useAuth } from "../lib/AuthContext.jsx";
 import { useLang } from "../i18n/index.jsx";
 import { visibleModules, breadcrumbParts } from "../lib/nav.js";
 import { addRecent, isRecentEntry, loadRecent, saveRecent } from "../lib/recent.js";
+import { DURATION, reducedMotion } from "../lib/motion.js";
 import LangSwitch from "./LangSwitch.jsx";
 import NavIcon from "./NavIcon.jsx";
 import Breadcrumbs from "./Breadcrumbs.jsx";
@@ -15,6 +16,21 @@ export default function Shell({ children, showNav }) {
   // so switching language does not reset a form that is half filled in.
   const { pathname } = useLocation();
   const pageKey = pathname.split("/").slice(2).join("/");
+
+  // Language switch: a quick cross-fade of the text. The page is not remounted (a half-filled form stays as it is);
+  // a class is added for a moment, and only opacity changes.
+  const mainRef = useRef(null);
+  const firstLang = useRef(true);
+  useEffect(() => {
+    if (firstLang.current) { firstLang.current = false; return undefined; }
+    const el = mainRef.current;
+    if (!el || reducedMotion()) return undefined;
+    el.classList.remove("lang-fade");
+    void el.offsetWidth; // restart the animation if the language is switched twice quickly
+    el.classList.add("lang-fade");
+    const id = setTimeout(() => el.classList.remove("lang-fade"), DURATION.base + 60);
+    return () => clearTimeout(id);
+  }, [lang]);
 
   // Phone menu: opens as a drawer; closes on a page change, on Escape and when the dark area is tapped.
   const [open, setOpen] = useState(false);
@@ -95,7 +111,7 @@ export default function Shell({ children, showNav }) {
             </aside>
           </>
         )}
-        <main id="main" tabIndex={-1} className="content page-enter" key={pageKey}>
+        <main id="main" ref={mainRef} tabIndex={-1} className="content page-enter" key={pageKey}>
           {showNav && <Breadcrumbs />}
           {children}
         </main>

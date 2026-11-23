@@ -570,3 +570,43 @@ tr.just-saved > td, .just-saved { animation: justSaved 2s ease-out backwards; }
 input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--terracotta); box-shadow: 0 0 0 1px var(--terracotta); }
 .field-error { margin: 0.3rem 0 0; color: var(--danger); font-size: 0.9rem; font-weight: 700; animation: flashIn var(--t-base) var(--ease) both; }
 .flash.error a.err-link { color: inherit; text-decoration: underline; }
+
+
+/* ==========================================================================
+   UI v2, Part D: the remaining animation. Same rules as 10.6: CSS only,
+   150 to 420 ms, nothing loops, nothing moves while typing, all switched off
+   by "reduce motion" (the rule at the top of this file covers every animation
+   and transition here). The few paint-only effects are named below.
+   ========================================================================== */
+:root { --t-slow: 420ms; }
+
+/* Language switch: quick cross-fade (opacity only) */
+@keyframes langFade { from { opacity: 0.35; } to { opacity: 1; } }
+.lang-fade { animation: langFade var(--t-base) var(--ease) both; }
+
+/* Roll call: smooth color change between statuses, a nudge when a count changes, one pulse at the limit */
+.roll-row { position: relative; transition: background var(--t-base), border-color var(--t-base); }
+.seg-btn { transition: background var(--t-base) var(--ease), color var(--t-base) var(--ease); }
+@keyframes nudge { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+.pill.nudge { animation: nudge 300ms var(--ease) both; }
+@keyframes ringPulse { 0%, 100% { opacity: 0; } 30%, 60% { opacity: 1; } }
+.roll-row.pulse::after, .col.pulse::after { content: ""; position: absolute; inset: 0; pointer-events: none; border: 2px solid var(--terracotta); border-radius: inherit; opacity: 0; animation: ringPulse 900ms ease-in-out 1 both; }
+.col { position: relative; }
+.col.pulse::after { border-color: var(--gold); }
+
+/* Marks grid: a cell above its maximum flashes terracotta once.
+   Exception to "transform and opacity only" (like the saved-row highlight): it paints a ring around one cell for a moment. */
+@keyframes markBad { 0%, 50% { box-shadow: 0 0 0 4px rgba(184, 67, 47, 0.55); } 100% { box-shadow: 0 0 0 4px rgba(184, 67, 47, 0); } }
+.mark-input.bad { animation: markBad 700ms ease-out 1 both; }
+
+/* Loading: placeholders with the outline of what is coming */
+.skeleton.sk-table, .skeleton.sk-cards, .skeleton.sk-form { max-width: none; }
+.sk-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; padding: 0.7rem 0.5rem; border-bottom: 1px solid var(--line); animation: fadeIn var(--t-base) ease both; animation-delay: calc(var(--i, 0) * 40ms); }
+.sk-row.sk-head { border-bottom: 2px solid var(--line); }
+.sk-row.sk-head .sk-line { height: 0.8rem; width: 60%; }
+.sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
+.sk-card { height: 9rem; border-radius: var(--radius); border: 1px solid var(--line); background: linear-gradient(90deg, var(--paper), #fff, var(--paper)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite, fadeIn var(--t-base) ease both; animation-delay: 0s, calc(var(--i, 0) * 60ms); }
+.sk-field { display: grid; gap: 0.35rem; margin-bottom: 1rem; max-width: 28rem; }
+.sk-line.w30 { width: 30%; }
+.sk-box { height: 2.75rem; border-radius: var(--radius-sm); border: 1px solid var(--line); background: linear-gradient(90deg, var(--paper), #fff, var(--paper)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@media (max-width: 640px) { .sk-row { grid-template-columns: 1fr 1fr; } .sk-row .sk-line:nth-child(3) { display: none; } }

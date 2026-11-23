@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, Loading, LoadError, pick, fullName } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, Loading, LoadError, CountTo, useGlide, pick, fullName } from "../../lib/ui.jsx";
+import { newlyFlagged, unbalancedKeys } from "../../lib/motion.js";
 import { proposeAllocation, sectionStats, suggestSectionCount } from "../../lib/allocation.js";
 import { nextSectionNames } from "../../lib/sectionNames.js";
 
@@ -77,6 +78,19 @@ export default function AllocationPage() {
     setPlacement(m); setOrig(m); setNewSections([]); setLeftover(0); setCount(String(sections.length || ""));
   }, [data.data, shift, wantKey]); // eslint-disable-line
 
+  // Motion: cards glide to their new column, and a column that has just become unbalanced pulses once.
+  const boardRef = useRef(null);
+  useGlide(boardRef, placement);
+  const prevUnbal = useRef(null);
+  const unbalNow = useMemo(() => {
+    const totals = new Map([...sections.map((s) => s.id), ...newSections.map((n) => n.key)].map((k) => [k, 0]));
+    students.forEach((s) => { const k = placement[s.id] ?? null; if (totals.has(k)) totals.set(k, totals.get(k) + 1); });
+    return unbalancedKeys(totals);
+  }, [students, sections, newSections, placement]);
+  const ready = students.length > 0 && Object.keys(placement).length === students.length;
+  const pulsing = useMemo(() => (ready ? newlyFlagged(prevUnbal.current, unbalNow) : new Set()), [unbalNow, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { prevUnbal.current = ready ? unbalNow : null; }, [unbalNow, ready]);
+
   if (ref.loading) return <Loading />;
   if (ref.error) return <LoadError />;
   const { years, grades } = ref.data;
@@ -149,7 +163,7 @@ export default function AllocationPage() {
         <p className="muted small full">{t("allocation.shiftNote")}</p>
       </section>
 
-      {data.loading ? <Loading /> : data.error ? <LoadError /> : students.length === 0 ? <p className="empty">{t("allocation.empty")}</p> : (
+      {data.loading ? <Loading shape="cards" rows={6} /> : data.error ? <LoadError /> : students.length === 0 ? <p className="empty">{t("allocation.empty")}</p> : (
         <>
           <section className="panel formgrid">
             <div>
@@ -169,26 +183,26 @@ export default function AllocationPage() {
           {leftover > 0 && <p className="flash error" role="alert">{t("allocation.leftover", { n: leftover })}</p>}
           <p className="muted small">{t("allocation.dragHint")}</p>
 
-          <div className="board" role="list">
+          <div className="board" role="list" ref={boardRef}>
             {columns.map((c) => {
               const stats = sectionStats(current, c.key);
               const list = current.filter((s) => s.sectionKey === c.key).sort((a, b) => fullName(a.row, "en").localeCompare(fullName(b.row, "en")));
               const full = c.capacity != null && stats.total >= c.capacity;
               return (
-                <section key={String(c.key)} role="listitem" className={`col${over === c.key ? " over" : ""}${c.isNew ? " is-new" : ""}${c.key === null ? " col-unplaced" : ""}`}
+                <section key={String(c.key)} role="listitem" className={`col${over === c.key ? " over" : ""}${c.isNew ? " is-new" : ""}${c.key === null ? " col-unplaced" : ""}${pulsing.has(c.key) ? " pulse" : ""}`}
                   onDragOver={(e) => { e.preventDefault(); setOver(c.key); }} onDragLeave={() => setOver(undefined)}
                   onDrop={(e) => { e.preventDefault(); setOver(undefined); const id = e.dataTransfer.getData("text/plain"); if (id) move(id, c.key); }}
                   aria-label={c.title}>
                   <header className="col-head">
                     <h3>{c.title}</h3>
-                    <p className="small"><strong>{t("allocation.students", { n: stats.total })}</strong>{c.capacity != null && <> · {t("allocation.capacity", { n: c.capacity })}{full && <span className="pill warn">{t("allocation.full")}</span>}</>}</p>
+                    <p className="small"><strong><Count text={t("allocation.students", { n: "{n}" })} n={stats.total} /></strong>{c.capacity != null && <> · {t("allocation.capacity", { n: c.capacity })}{full && <span className="pill warn">{t("allocation.full")}</span>}</>}</p>
                     {c.key !== null && stats.total > 0 && (
                       <p className="small muted">{t("allocation.split", { f: stats.female, m: stats.male })}<br />{t("allocation.avg", { avg: stats.avg == null ? t("allocation.noResult") : stats.avg.toFixed(1) })}</p>
                     )}
                   </header>
                   <ul className="cards">
                     {list.map((s) => (
-                      <li key={s.id} className={`card-student${(placement[s.id] ?? null) !== (orig[s.id] ?? null) ? " moved" : ""}`} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", s.id)}>
+                      <li key={s.id} data-glide={s.id} className={`card-student${(placement[s.id] ?? null) !== (orig[s.id] ?? null) ? " moved" : ""}`} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", s.id)}>
                         <span className="nm">{fullName(s.row, lang)}</span>
                         <span className="meta small muted">{t(`students.sexes.${s.sex}`)}{s.result != null ? ` · ${s.result}` : ""}</span>
                         <select aria-label={t("allocation.moveLabel", { name: fullName(s.row, lang) })} value={s.sectionKey || ""} onChange={(e) => move(s.id, e.target.value)}>
@@ -214,4 +228,10 @@ export default function AllocationPage() {
       )}
     </>
   );
+}
+
+// "12 students" where the number counts up or down to its new value. `text` still holds the {n} placeholder.
+function Count({ text, n }) {
+  const [pre, post] = text.split("{n}");
+  return <>{pre}<CountTo value={n} />{post ?? ""}</>;
 }

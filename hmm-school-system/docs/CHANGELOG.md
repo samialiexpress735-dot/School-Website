@@ -2,6 +2,23 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI v2, Part D – remaining animation and shaped loading placeholders
+- Added: `src/lib/motion.js`, `tests/motion.test.js`
+- Edited: `src/lib/ui.jsx`, `src/components/Shell.jsx`, `src/pages/attendance/RollCallPage.jsx`, `src/pages/marks/EntryPage.jsx`, `src/pages/students/AllocationPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/reports/RosterPage.jsx`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change. No new texts, so no change to the language files.
+- What changed:
+  - **Language switch:** a quick cross-fade of the page text; the page is not reloaded, so a half-filled form stays.
+  - **Roll call:** smoother color change between statuses; the counts nudge when they change; one gentle pulse for a student who has just reached the absence limit.
+  - **Marks grid:** a cell above its maximum flashes terracotta once; totals, result and class average count to the new value.
+  - **Allocation board:** cards glide to their new column; student counts count to the new number; a column that becomes unbalanced pulses once.
+  - **Loading:** table, card and form shaped placeholders (student list, roster, roll call, marks grid, allocation board).
+  - Everything is switched off by "reduce motion"; counting numbers are read out by screen readers as their final value only.
+  - **Documentation repair:** the report card and public website revision had been made on an older copy of the blueprint and changelog and had dropped the Part C notes. They are restored here (Part C section 11.5 "As built", the Part C changelog entry, and the progress lines).
+- After this update: open the roll call, change a few students and watch the counts; save a student up to the absence limit and look for the single pulse; in the marks grid type a mark above the maximum, and change a valid mark and watch the totals; on the allocation board move students by drag and by the "Move to" menu; switch language on a half-filled registration form; try the whole thing once with the system's "reduce motion" setting on (nothing should move).
+- Tested: `npm test` passes (53 tests, 7 new for the count steps, the pulse and glide logic). The app builds. A browser simulation (jsdom) rendered the new loading shapes, the nudge (not on first show, yes after a change) and the counting number (starts as is, moves, ends exactly on the new value, screen reader text is the final value). It was **not** run in a real browser: the gliding of cards and the pulses depend on real layout, which the simulation does not have, so they, and the look on a phone and an old school computer, still need your check.
+- Next: Part E (phone and Amharic polish), after you have tried Part D.
+
 ## Blueprint revision – report card templates and public website plan
 - Added: nothing
 - Edited: `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
@@ -14,6 +31,21 @@ Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and ru
   - Roles (section 3), safety (4.10), tables (5), build phases (6), decisions (7) and open questions (8, items 11 to 13) updated. Parent and student logins removed from the plan.
 - After running: nothing to run. Please answer section 8, items 11 to 13, starting with the report card PDF.
 - Known limits: planning only; hosting (undecided) affects good web addresses and per-visitor limits on the public site.
+
+## UI v2, Part C – dialogs, saved-row highlight, unsaved changes and clearer errors
+- Added: `src/components/Dialogs.jsx`, `src/lib/rowflash.js`, `tests/rowflash.test.js`
+- Edited: `src/App.jsx`, `src/lib/ui.jsx`, `src/styles.css`, `src/i18n/en.js`, `src/i18n/am.js`, `src/pages/marks/EntryPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/pages/reports/PromotionPage.jsx`, `src/pages/staff/DepartmentsPage.jsx`, `src/pages/staff/StaffFormPage.jsx`, `src/pages/structure/CalendarPage.jsx`, `src/pages/structure/SectionsPage.jsx`, `src/pages/structure/SubjectsPage.jsx`, `src/pages/structure/YearsPage.jsx`, `src/pages/students/RegisterPage.jsx`, `src/pages/students/StudentParts.jsx`, `src/pages/students/StudentProfilePage.jsx`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change.
+- What changed:
+  - **Styled dialogs** replace all 13 plain browser confirm windows (delete section, calendar entry or guardian; close year; finalize or reopen marks; save or delete a mark structure; remove a login; change stream or status; create many sections; approve promotion). Each one names the action, says what changes, and has a button worded as the action. Dangerous ones start on Cancel. Escape or a tap outside cancels; focus stays in the dialog and returns afterwards.
+  - **Unsaved changes:** the registration form and the mark structure editor ask before a link inside the app (or closing the tab) loses typed data. Switching language does not ask.
+  - **Saved-row highlight:** an added or changed row glows gold for two seconds on academic years, calendar, subjects, sections and departments.
+  - **Messages:** errors have a close button and stay until closed. In registration step 1, names, sex and date of birth show their message under the field and focus moves to the first problem. The marks grid shows a green ring on a saved cell and a clear warning while any mark is not saved.
+  - English and Amharic texts for everything new. The Amharic wording is new and should be read by a native speaker.
+- After this update: try deleting a calendar entry or a section and cancel with Escape; finalize marks; start registering a student, type a name and click a menu item (you should be asked), then try the same with a language switch (you should not). Check the dialog on a phone in both languages.
+- Tested: `npm test` passes (46 tests, 5 new for the row highlight logic). The app builds; every dialog and message text exists in English and Amharic with the same placeholders. A browser simulation (jsdom, with a stand-in for the database) checked the real app: the delete dialog (alertdialog role, red primary button named for the action, focus on Cancel, Escape and Cancel delete nothing, focus returns to the opener, Tab stays inside, Confirm deletes), registration (inline errors, `aria-invalid` and linking, focus on the first problem, the message disappears when fixed, the leave-page dialog with Stay and Leave, no prompt when switching language or when the form is untouched), a failed save (error stays after 5 seconds and the close button removes it), and the highlight hook (no flash on first load or filter change, flashes changed and added rows, goes away). It was **not** run in a real browser: the look of the dialog on a phone, the gold highlight and the Back-button behaviour still need your check.
+- Next: Part D (the remaining animation) and Part E (phone and Amharic polish), after you have tried Part C.
 
 ## UI v2, Parts A and B – sidebar, breadcrumbs and role dashboards
 - Added: `src/components/NavIcon.jsx`, `src/components/Breadcrumbs.jsx`, `src/lib/nav.js`, `src/lib/recent.js`, `src/lib/dashboard.js`, `src/lib/dashboardData.js`, `tests/nav.test.js`, `tests/dashboard.test.js`

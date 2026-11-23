@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase.js";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
-import { useQuery, useNotice, Notice, LoadError, Loading, pick, fullName } from "../../lib/ui.jsx";
+import { useQuery, useNotice, Notice, LoadError, Loading, CountTo, pick, fullName } from "../../lib/ui.jsx";
 import { formatEc } from "../../lib/ethiopian.js";
 import { can, MARK_LOCKERS, MARK_UNLOCKERS } from "../../lib/roles.js";
 import {
@@ -162,7 +162,7 @@ function Grid({ refData, year, semester, section, subject, canTeach, isAdmin }) 
     return { data: { structure, enrollments, lock: lk.data, marks, stamp: Date.now() }, error: null };
   }, [year.id, semester.id, section.id, subject.id]);
 
-  if (q.loading) return <Loading />;
+  if (q.loading) return <Loading shape="table" rows={8} />;
   if (q.error) return <LoadError />;
   const { structure, enrollments, lock, marks, stamp } = q.data;
   if (!structure) {
@@ -367,9 +367,9 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
                       </td>
                     );
                   }),
-                  <td key={`${g.id}-t`} className="center muted">{calc.groups[gi].entered === 0 ? "—" : fmt(calc.groups[gi].out, 2)}</td>,
+                  <td key={`${g.id}-t`} className="center muted">{calc.groups[gi].entered === 0 ? "—" : <CountTo value={calc.groups[gi].out} decimals={2} format={(v) => fmt(v, 2)} />}</td>,
                 ])}
-                <td className={calc.complete ? "center" : "center muted"}><strong>{calc.formulaError || calc.missing === comps.length ? "—" : fmt(calc.result, structure.rounding_places)}</strong></td>
+                <td className={calc.complete ? "center" : "center muted"}><strong>{calc.formulaError || calc.missing === comps.length ? "—" : <CountTo value={calc.result} decimals={structure.rounding_places} format={(v) => fmt(v, structure.rounding_places)} />}</strong></td>
               </tr>
             ))}
           </tbody>
@@ -377,7 +377,7 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
             <tfoot>
               <tr>
                 <td colSpan={comps.length + structure.groups.length + 1}>{t("marks.classAverage")}</td>
-                <td className="center"><strong>{fmt(classAvg, 1)}</strong></td>
+                <td className="center"><strong><CountTo value={classAvg} decimals={1} format={(v) => fmt(v, 1)} /></strong></td>
               </tr>
             </tfoot>
           )}
