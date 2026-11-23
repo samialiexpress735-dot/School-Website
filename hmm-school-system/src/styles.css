@@ -451,3 +451,84 @@ details.subpanel[open] > summary { margin-bottom: 0.5rem; }
   table { font-size: 0.9rem; }
   a { color: inherit; text-decoration: none; }
 }
+
+/* ==========================================================================
+   UI v2, Parts A and B: sidebar, breadcrumbs, skip link, dashboard shortcuts.
+   Same tokens and motion rules as before (transform and opacity only).
+   ========================================================================== */
+.skip-link { position: absolute; inset-inline-start: 0.75rem; top: 0.75rem; z-index: 100; background: var(--gold); color: var(--ink); padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-weight: 700; text-decoration: none; transform: translateY(-300%); transition: transform var(--t-fast) var(--ease); }
+.skip-link:focus { transform: none; }
+.topbar-left { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+#main:focus { outline: none; }
+
+/* Page frame: sidebar on the side of wide screens, a drawer on phones and tablets */
+.frame { flex: 1; display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); align-items: start; }
+.frame.no-side { grid-template-columns: minmax(0, 1fr); }
+.frame > .content { width: 100%; min-width: 0; }
+.sidebar { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; background: var(--surface); border-inline-end: 1px solid var(--line); padding: 1rem 0.75rem; }
+.sidebar ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+.sidebar a { position: relative; display: flex; align-items: center; gap: 0.75rem; min-height: 44px; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); color: var(--text); text-decoration: none; transition: background var(--t-fast), color var(--t-fast); }
+.sidebar a:hover { background: var(--paper); }
+.sidebar a.active { background: #e9f1f8; color: var(--ink); font-weight: 700; }
+.sidebar a::before { content: ""; position: absolute; inset-inline-start: 0; top: 0.5rem; bottom: 0.5rem; width: 4px; border-radius: 4px; background: var(--gold); transform: scaleY(0); transition: transform var(--t-base) var(--ease); }
+.sidebar a.active::before { transform: scaleY(1); }
+.nav-icon { width: 1.35rem; height: 1.35rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.menu-btn { display: none; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; background: transparent; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: var(--radius-sm); cursor: pointer; }
+.menu-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.menu-bars, .menu-bars::before, .menu-bars::after { display: block; width: 1.3rem; height: 2px; background: #fff; border-radius: 2px; }
+.menu-bars { position: relative; }
+.menu-bars::before, .menu-bars::after { content: ""; position: absolute; inset-inline-start: 0; }
+.menu-bars::before { top: -6px; }
+.menu-bars::after { top: 6px; }
+.scrim { display: none; }
+
+/* Breadcrumb line */
+.breadcrumb { margin: 0 0 0.75rem; font-size: 0.9rem; }
+.breadcrumb ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; align-items: center; }
+.breadcrumb li + li::before { content: "›"; margin-inline-end: 0.5rem; color: var(--muted); }
+.breadcrumb a { color: var(--teal); }
+.breadcrumb [aria-current] { color: var(--muted); }
+
+/* Dashboard: figures, shortcuts, recent pages, empty states */
+.stats { list-style: none; margin: 0.75rem 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.75rem; }
+.stats li { animation: fadeUp var(--t-base) var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.stat { display: flex; flex-direction: column; gap: 0.1rem; min-height: 5.25rem; padding: 0.9rem 1rem; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--teal); border-radius: var(--radius); box-shadow: var(--shadow-sm); text-decoration: none; transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease); }
+a.stat:hover, a.stat:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.stat strong { font-size: 1.9rem; line-height: 1.1; color: var(--ink); }
+.stat span { color: var(--muted); font-size: 0.9rem; }
+.stat.skeleton { border-top-color: var(--line); background: linear-gradient(90deg, var(--paper), #fff, var(--paper)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.shortcuts { list-style: none; margin: 0.75rem 0 2rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.75rem; }
+.shortcuts li { animation: fadeUp var(--t-base) var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.shortcuts a { display: flex; align-items: center; gap: 0.9rem; min-height: 4.5rem; height: 100%; padding: 0.85rem 1rem; background: var(--surface); border: 1px solid var(--line); border-inline-start: 4px solid var(--gold); border-radius: var(--radius); box-shadow: var(--shadow-sm); text-decoration: none; color: var(--text); transition: transform var(--t-base) var(--ease), box-shadow var(--t-base) var(--ease), border-color var(--t-base); }
+.shortcuts a:hover, .shortcuts a:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--teal); }
+.shortcuts strong { display: block; color: var(--ink); }
+.shortcuts small { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 0.1rem; }
+.shortcut-icon { flex: none; display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; background: var(--cream); color: var(--ink); }
+.recent { list-style: none; margin: 0.5rem 0 2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.recent a { display: inline-block; padding: 0.4rem 0.9rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); text-decoration: none; color: var(--ink); transition: background var(--t-fast), border-color var(--t-fast); }
+.recent a:hover { background: var(--paper); border-color: var(--teal); }
+.empty-state { background: var(--cream); border: 1px dashed var(--gold); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 2rem; max-width: 40rem; animation: fadeUp var(--t-base) var(--ease) both; }
+.empty-state h2 { margin: 0 0 0.35rem; font-size: 1.2rem; }
+.empty-state p { margin: 0 0 1rem; color: var(--muted); }
+.empty-state .btn { display: inline-block; text-decoration: none; }
+
+/* Phones and tablets: the sidebar becomes a drawer opened with the menu button */
+@media (max-width: 899px) {
+  .frame { grid-template-columns: minmax(0, 1fr); }
+  .menu-btn { display: inline-flex; }
+  .sidebar { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 60; width: min(18rem, 85vw); max-height: none; transform: translateX(-100%); visibility: hidden; box-shadow: var(--shadow-md); transition: transform var(--t-base) var(--ease), visibility 0s linear var(--t-base); }
+  .sidebar.is-open { transform: none; visibility: visible; transition-delay: 0s; }
+  .scrim { display: block; position: fixed; inset: 0; z-index: 50; background: rgba(15, 46, 77, 0.45); opacity: 0; visibility: hidden; transition: opacity var(--t-base), visibility 0s linear var(--t-base); }
+  .scrim.is-open { opacity: 1; visibility: visible; transition-delay: 0s; }
+}
+@media (max-width: 640px) {
+  .topbar-name span { display: none; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .shortcuts { grid-template-columns: 1fr; }
+}
+
+@media print {
+  .sidebar, .scrim, .breadcrumb, .menu-btn { display: none !important; }
+  .frame { display: block; }
+}

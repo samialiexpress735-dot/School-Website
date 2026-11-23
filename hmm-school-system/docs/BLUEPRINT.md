@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). **Step 7 (reports, report cards, promotion) is done** (update `012_step7_promotion.sql`, sections 4.8 and 4.9 "As built"). Step 8 (testing) was done by the school owner. The next stage is the **UI v2 plan** (section 11): navigation, role dashboards, feedback and animation, so the system is user friendly. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). **Step 7 (reports, report cards, promotion) is done** (update `012_step7_promotion.sql`, sections 4.8 and 4.9 "As built"). Step 8 (testing) was done by the school owner. The next stage is the **UI v2 plan** (section 11): navigation, role dashboards, feedback and animation, so the system is user friendly. **Parts A and B of UI v2 are built**; parts C to F are next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
@@ -266,7 +266,7 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Done |
 | 7 | Reports, report cards, promotion | Year-end ready | Done |
 | 8 | Testing with real staff, fixes | Test version | Done (by the school owner, Steps 0 to 7) |
-| UI v2 | User-friendly interface and animation (section 11, parts A to F) | Easier and safer to use | Next |
+| UI v2 | User-friendly interface and animation (section 11, parts A to F) | Easier and safer to use | Parts A and B done; C to F next |
 | 9 | **Timetable, per-period attendance, live alerts** | Period attendance ready | |
 | 10 | Public website (news, events, gallery, admissions, results lookup, parent and student logins) | Full site | |
 | 11 | Deploy to the chosen hosting (hosting still TBD) | Live | |
@@ -473,6 +473,8 @@ Added after Step 7. The school owner has tested Steps 0 to 7 and asked for a pla
 ### 11.2 Parts and order
 Each part is delivered as its own update (zip with only added and edited files, working rule 1) and is tested by the school owner before the next part starts.
 
+**Status:** Parts A and B are built (first UI v2 update, see "As built" under 11.4). Parts C to F are planned.
+
 | Part | What | Result |
 |---|---|---|
 | A | Navigation and orientation | Easy to find things |
@@ -500,8 +502,21 @@ The dashboard shows what the signed-in person does most, by role. The module car
 | System admin | All of the above, plus accounts without a role |
 - **Stat tiles** (students, staff, sections, today's attendance) as small figures, each a link to its list.
 - **Friendly empty states** on warm cream with one clear action ("No students yet. Register the first student"), as planned in 10.4.
-- **Recent items:** the last sections and subjects a person worked in, to reopen them in one click.
+- **Recent items:** the last pages a person opened, to reopen them in one click (as built: pages, not sections or subjects; see below).
 - The shortcuts only read data that already exists; no new tables.
+
+**As built in Parts A and B - decisions and assumptions**
+- **Sidebar:** on screens 900 px wide or more it stays on the side with an icon and the name of each module and a gold marker on the active one. On smaller screens it is a drawer opened with a menu button in the top bar; it closes on a page change, with Escape and when the dark area is tapped. The old row of tabs at the top of the page is gone; the sub-tabs of each module stay at the top of its page. Icons are drawn inline, no library was added.
+- **Role-aware menu:** every role sees Dashboard, School structure, Students, Marks, Attendance and Reports; **Staff** is shown to the system admin, director, vice director, unit leader and registrar only (the same roles the database lets read the staff list, so a teacher would see only an empty page). Nothing else is hidden because every role can read something in those modules; the database stays the real protection.
+- **Breadcrumb** under the top bar on every page except the dashboard (Dashboard > Students > Register student). A student or staff profile shows "Details". The breadcrumb is not printed.
+- **Skip link:** the first Tab on any page offers "Skip to content". All menu items, the menu button and the drawer work with the keyboard.
+- **Dashboard** now has four blocks under the welcome banner: **At a glance** (tiles), **What would you like to do?** (role shortcuts), **Recently opened** and the **modules** list (only the modules the role can see).
+  - Tiles: students enrolled this year (not withdrawn), sections, active staff, students marked absent today, and for the system admin accounts without a role. A teacher sees "My students" and "My sections" (sections where they teach or are homeroom teacher) and no staff tile. A figure that cannot be read is left out, not shown as 0. Each tile is a link.
+  - Shortcuts by role: teacher (roll call, enter marks, absence limit, section roster); unit leader (finalize marks, absence limit, teacher assignments, enter marks); registrar (register a student, section allocation, import students); director and vice director (absence limit, finalize marks, year-end promotion, section roster); system admin (register a student, staff and accounts, promotion, academic years, absence limit). A shortcut is a link to an existing screen; it shows no count.
+  - Empty states (cream panel, one action): no current academic year (the system admin, director and vice director get a button to Academic years; other roles are told to ask the administrator); no students yet (registrar and system admin get a button to register the first student); a teacher not assigned to any section (told to ask the director or vice director).
+  - Recently opened keeps the last 4 pages (for example Marks > Results) in this browser only, per signed-in person. Only page addresses are stored, never names or ids; profile pages are not stored. Clearing the browser data clears the list.
+- **Assumptions to confirm:** (a) the logo and official colors are still undecided, so the working palette is unchanged; (b) teachers are the main phone users, so the drawer, shortcuts and tiles were laid out for a phone first; (c) "absent today" counts attendance rows of today marked absent (the date is the computer's local date); (d) the shortcut list for each role is a first proposal and is easy to change.
+- **Not in Parts A and B:** styled dialogs and saved-row highlights (Part C), most animation (Part D), table-to-card conversion (Part E). The only new motion is the existing fade-up for tiles and shortcuts, the sliding drawer and the gold marker on the active menu item, all switched off by "reduce motion".
 
 ### 11.5 Part C: feedback and safety
 - **Styled dialogs** replace the browser's plain `confirm` window (used today when finalizing marks, changing a mark structure and approving promotion). A dialog names the action, how many records are affected and what cannot be undone, with a clear cancel button and a primary button worded as the action ("Approve and save 42 decisions"). Focus moves into the dialog and returns afterwards; Escape cancels.
@@ -549,7 +564,7 @@ Same rules as 10.6. New and remaining motion, each with its purpose:
 5. The blueprint and changelog are updated in the same zip (working rules 2 and 6).
 
 ### 11.10 Still needed from you
-1. Do you want to start with **Parts A and B together** (the recommended first update)?
+1. ~~Start with Parts A and B together?~~ **Answered: yes. Built.**
 2. Logo and official colors: still **undecided** (section 8, item 6). Until then the working palette is used.
 3. Which roles use the system most on **phones** (teachers for roll call and marks is assumed), so Part E tests those screens first.
 4. Is a **two-language report card** wanted, or is a card in the language of the page enough?

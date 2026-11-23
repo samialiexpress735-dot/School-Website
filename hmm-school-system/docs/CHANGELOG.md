@@ -2,6 +2,19 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI v2, Parts A and B – sidebar, breadcrumbs and role dashboards
+- Added: `src/components/NavIcon.jsx`, `src/components/Breadcrumbs.jsx`, `src/lib/nav.js`, `src/lib/recent.js`, `src/lib/dashboard.js`, `src/lib/dashboardData.js`, `tests/nav.test.js`, `tests/dashboard.test.js`
+- Edited: `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change.
+- What changed:
+  - **Part A, navigation:** a sidebar with icons replaces the row of tabs at the top. On phones and tablets it is a drawer opened by a menu button. The menu shows only what the role can use (Staff is hidden from teachers). A breadcrumb line shows where you are (Dashboard > Students > Register student) and a "Skip to content" link appears on the first Tab. Printing hides the sidebar and breadcrumb.
+  - **Part B, dashboard:** under the welcome banner: **At a glance** tiles (students, sections, active staff, absent today, and for the system admin accounts without a role; a teacher sees only their own), **What would you like to do?** shortcuts for each role (for example roll call and marks for teachers, register a student and section allocation for the registrar, promotion for the director), **Recently opened** pages, and the modules list. Friendly empty states with one action when there is no current academic year, no students yet, or a teacher has no section yet.
+  - English and Amharic texts for everything new. The Amharic wording is new and should be read by a native speaker.
+- After this update: open the dashboard as a teacher, the registrar and the director; check the menu items, the shortcuts and the tiles; open a student's page and check the breadcrumb; on a phone, open and close the menu.
+- Tested: `npm test` passes (41 tests, 10 new for menu by role, breadcrumbs, recent pages, shortcuts, tiles and empty states). The app builds. Every new English and Amharic key exists in both languages. A browser simulation (jsdom, with a stand-in for the database) rendered the real app and checked: the teacher menu has no Staff, tiles and shortcuts per role, the three empty states, the Amharic menu and shortcuts, the breadcrumb on Students > Register student, the active menu item, the recent-pages list, and the drawer (menu button opens it, Escape and the dark area close it), with no console errors. It was **not** run in a real browser: the look of the sidebar, the drawer on a real phone, spacing and the new motion still need your check, in English and Amharic.
+- Next: Part C (styled dialogs, saved-row highlight, inline errors) after you have tried A and B.
+
 ## Blueprint update – UI v2 plan (user-friendly interface and animation)
 - Added: nothing
 - Edited: `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
