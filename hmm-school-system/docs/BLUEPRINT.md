@@ -4,14 +4,14 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). **Step 7 (reports, report cards, promotion) is done** (update `012_step7_promotion.sql`, sections 4.8 and 4.9 "As built"). Step 8 (testing) was done by the school owner. The next stage is the **UI v2 plan** (section 11): navigation, role dashboards, feedback and animation, so the system is user friendly. **Parts A, B and C of UI v2 are built**; parts D to F are next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). **Step 7 (reports, report cards, promotion) is done** (update `012_step7_promotion.sql`, sections 4.8 and 4.9 "As built"). Step 8 (testing) was done by the school owner. The next stage is the **UI v2 plan** (section 11): navigation, role dashboards, feedback and animation, so the system is user friendly. **Parts A and B of UI v2 are built**; parts C to F are next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation. **Blueprint revision (planned, no code yet):** the school's own **report card template designer** (4.8.1) and the **public website plan** (4.11) have been added; the public site has no sign-in or sign-up, and results are checked with the student ID and a PIN.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
 
 ## 1. Goal and scope
 
-Build a bilingual (English default, Amharic) school management system first, and the public website second. Phase 1 covers administration only: staff, students, sections, marks, attendance and reports. News, gallery, admission forms, results lookup and parent or student logins come after Phase 1.
+Build a bilingual (English default, Amharic) school management system first, and the public website second. Phase 1 covers administration only: staff, students, sections, marks, attendance and reports. News, events, gallery, admissions pre-registration and the results lookup (no public accounts, see 4.11) come after Phase 1. Student and parent logins are **not planned**; the school asked for a site without sign-in and sign-up.
 
 Grades: 9, 10, 11, 12. Grades 11 and 12 can have a Natural Science or Social Science stream.
 
@@ -38,7 +38,9 @@ Grades: 9, 10, 11, 12. Grades 11 and 12 can have a Natural Science or Social Sci
 | Registrar | Register students, manage enrollment, sections, transfers |
 | Teacher | Enter marks and attendance only for assigned subjects and sections; edit the mark structure of their own assigned subjects (4.6) |
 
-Student and parent logins are added in a later phase. Every user sees only what their role allows (enforced in the database, not just the screen).
+There are **no student or parent logins**. Results are checked on the public website with the student ID and a PIN (4.11). Every user sees only what their role allows (enforced in the database, not just the screen).
+
+**Publisher permission (planned, 4.11):** like "homeroom", this is not a separate login role. It is a permission that the **director or vice director** gives to a staff member (and can take away) so that person can publish news, events, photos and downloads on the public website. The director and vice director can always publish. **The system admin cannot publish** public content (decided by the school owner).
 
 ## 4. Phase 1 modules
 
@@ -227,6 +229,33 @@ Views and reports: daily sheet per section, student attendance history across ye
 - **Language and printing:** a report card is printed in the language of the page (English or Amharic); there is no two-language card yet. Printing uses the browser's print dialog (save as PDF there). There is no Excel or PDF export (skipped by decision).
 - **Who sees what:** system admin, director, vice director and unit leaders see every section. A homeroom teacher sees the roster and report cards of their section. A subject teacher sees only the *Subject sheets* of their own subject and section. The database still decides what can really be read.
 
+### 4.8.1 Report card templates (planned)
+
+The school already has its own printed report card form. The current built-in card (4.8) has a fixed layout, so it cannot match that form. This feature lets the school upload its **own blank form** and tell the system **where each value goes**. Decided with the school owner: the subject names are already printed on the form, so the system never prints subject names; it only puts each subject's numbers into the right boxes.
+
+**How it works**
+1. **Upload the blank form** (PDF or a clean scan or photo). A PDF is converted in the browser to a background image per page. The PDF itself is never edited.
+2. **Mark the columns.** The designer places a column for Semester 1, Semester 2 and Average (and the result, if the form has a box for it). Each column is tied to its value from the system.
+3. **Link the rows to subjects.** The person clicks each printed row and picks its subject from the grade's subject list. The designer shows the system's Amharic and English subject name beside the row so the link can be checked against what is printed.
+4. **Place single fields:** student name, ID, grade, section, stream, year, shift, homeroom teacher, totals, averages, rank, result, attendance, signature lines and the printed date. Each has a position, font size and alignment.
+5. **Fine-tune.** A single box can be nudged; the whole page can be shifted a few millimeters to match the printer.
+6. **Preview with a real student**, then save. Printing one card or a whole section uses the same renderer as the preview.
+
+**Rules**
+- **Values** come from the same engine as Marks > Results and Reports (4.6, 4.8): each semester result as a percent of its maximum, the yearly average as the mean of the two semesters, rounding by `yearly_rounding_places`, pass or fail by `pass_mark`, rank by overall average within the section (ties share a rank, as in the roster).
+- **Missing marks leave the box blank.** A zero is never printed for a missing mark. A subject the student does not take (for example by stream) stays blank.
+- **No silent loss.** If a grade has a subject with no row on the form, or a row points to a subject the grade does not have, the designer shows a warning and the printed batch lists the affected students. The subject lists change per year (4.5), so this check runs every time.
+- **Scope.** A template is assigned to one or more grades (and streams) and has a kind: Semester 1 card, Semester 2 card, or yearly card, when the school uses different forms. One form can serve several grades because rows are linked by subject; rows with no subject for that grade stay empty. A grade with no template uses the built-in card.
+- **Pages.** One or two pages per form (front and back); fields are placed per page. To confirm.
+- **Language.** Fields print in the language chosen when printing; Amharic text uses the same font as the screens.
+- **Versions.** Each saved layout is a new version. A card printed last year can be reproduced exactly even after the template changes.
+- **Who:** the system admin, director and vice director upload and edit templates. Registrars, unit leaders and teachers print only what 4.8 already lets them see.
+- **Files:** the blank forms are stored in a **private** storage bucket. Only the roles that can print reports read them. The public website never uses them (a printable card on the public site is a possible later addition, not part of this plan).
+
+**Not included:** editing the PDF itself, automatic detection of cells (the person marks them), Excel export, conduct or teacher remarks (the system does not store them yet; see section 8 for the decision), and a two-language card.
+
+**Data (planned):** `report_templates` (name, kind, grades and streams it serves), `report_template_versions` (layout as data, background file path, page size, offset), kept in the audit log. A new numbered SQL file and one new page under Reports.
+
 ### 4.9 Promotion and year rollover
 - At year end, promote eligible students to the next grade as new enrollments, with the Director's approval. Repeaters stay in the same grade. Grade 12 completers are marked as graduated.
 
@@ -244,14 +273,62 @@ Views and reports: daily sheet per section, student attendance history across ye
 - Login required for everything in Phase 1
 - Role-based access enforced by database rules
 - Audit log of important actions
-- Student data is never public
+- Student data is never public, with one exception: a student's own results through the ID-and-PIN lookup (4.11). Core tables are never opened to anonymous visitors.
 - Regular database backup instructions
+
+### 4.11 Public website (planned, Step 10)
+
+**Decided with the school owner:** the public website has **no sign-in and no sign-up**. Everything on it is either public school information or protected by a student ID plus a PIN. The pages are in English and Amharic with the same language switch and Ethiopian dates.
+
+**Pages and features**
+- **Home:** school name, short welcome, latest news, next events.
+- **About:** history, mission, the director's message, location on a map.
+- **Academics:** grades and streams, subject lists, and the school calendar with holidays and semester dates (read from the system, not typed twice).
+- **Staff:** leadership and department heads only; teachers' names only if the school agrees; no private details.
+- **News and events:** posted by the publishers (below), draft then publish.
+- **Photo gallery:** photos of events. A photo with identifiable students needs the "consent recorded" box ticked by the publisher.
+- **Downloads:** forms, calendars and notices as PDF files.
+- **Announcements:** short notices such as exam weeks or "school closed", shown on top of the home page until their end date.
+- **Admissions:** requirements, dates and fees, plus a **pre-registration form**.
+- **Contact:** phone, address, map and a contact form with spam protection.
+- **Results lookup:** student ID plus PIN (below).
+- **Left out on purpose:** comments, forums, live chat and public accounts, because they need moderation and invite abuse.
+
+**Results lookup (ID plus PIN)**
+- A student's marks belong to the student's enrollment of each year, and the enrollment belongs to the student, so the permanent **student ID** (4.3) finds the marks of every year.
+- **Second factor: a school-issued PIN**, 6 random digits made for each student, printed on the report card or handed out at registration. Date of birth is not used because classmates and relatives know it and there are few possible values.
+- The PIN is stored only as a **hash**. It is shown once when issued. The registrar, director and vice director can issue a new PIN (the student ID never changes).
+- The public site calls **one narrow database function** that checks the ID and PIN and returns only that student's name, grade, section and subject results. It returns no date of birth, guardian, address or photo.
+- **Only published results** are returned. The director or vice director publishes a semester for a grade or section, and can only do so when every subject of that section is finalized (4.6). The yearly average appears only when both semesters are published. Publishing can be undone.
+- **Guessing protection:** after 5 wrong attempts for one ID, lookups for it pause for 15 minutes; the error message never says whether the ID exists; the student ID's check character rejects typing mistakes before any lookup; every attempt is logged (time, success or not) in a table the administration can read. A per-visitor limit is also needed at the host (see hosting, section 8).
+- Results use the same calculation engine as the Results screen, including the pass mark and rounding.
+
+**Admissions pre-registration**
+- The form creates a **pending application** (child's name, date of birth in the Ethiopian calendar, grade applied for, previous school, guardian name and phone). It does not create a student. The registrar reviews it and, if accepted, registers the student through the normal Step 4 form (with the details prefilled, to confirm).
+- Applications and contact messages are private: the registrar, director and vice director read them (contact messages: director, vice director and publishers).
+- Spam protection: a hidden trap field and a limit on submissions per visitor; a CAPTCHA only if spam appears.
+
+**Publishing (who writes the public content)**
+- The director, vice director and staff who hold the **Publisher permission** can create, edit, publish and remove news, events, announcements, gallery items and downloads. The **system admin cannot**. Each item has English and Amharic text (at least one language), a draft or published state, a publish date, and the author's name. Changes are in the audit log.
+- Image upload rules: photos are resized in the browser before upload; a size limit applies; only images and PDFs are accepted.
+
+**Security rules for the public site**
+- The public site reads only from dedicated public tables, or from functions written for it. Anonymous visitors have **no access** to students, marks, enrollments, staff, guardians or any other core table.
+- Public pages never show student names outside the PIN lookup (galleries use captions without names unless the school decides otherwise).
+
+**Technical notes (to confirm at planning)**
+- The public pages are a **separate, light entry** of the same project so visitors do not download the administration code.
+- The current app uses hash addresses (`/#/en/...`), which search engines and link sharing handle poorly. Good web addresses for news pages need either path-based routing (the host must send every address to the app) or pre-built pages. This depends on the hosting decision (section 8, item 1).
+
+**Data (planned):** `news_posts`, `events`, `announcements`, `gallery_items`, `downloads`, `admission_applications`, `contact_messages`, `student_pins` (hashes only), `results_publications` (semester, section, published by, published at), `lookup_attempts`, and a `can_publish` flag on `staff`. New numbered SQL files and a storage bucket for photos and downloads.
 
 ## 5. Main database tables
 
 (Tables for assessment configuration were redesigned in Step 5, see 4.6; the subject catalogue per academic year is held as data in `subjects` and `grade_subjects`.)
 
 `academic_years`, `semesters`, `profiles` (users and roles), `staff`, `departments`, `students`, `guardians`, `student_guardians`, `grades`, `streams`, `sections`, `subjects`, `grade_subjects`, `teacher_assignments`, `enrollments`, `assessment_structures`, `assessment_groups`, `assessment_components`, `marks`, `mark_locks`, `attendance`, `promotions`, `audit_log`.
+
+Planned (not created yet): `report_templates`, `report_template_versions` (4.8.1); `news_posts`, `events`, `announcements`, `gallery_items`, `downloads`, `admission_applications`, `contact_messages`, `student_pins`, `results_publications`, `lookup_attempts` (4.11).
 
 ## 6. Build phases
 
@@ -266,9 +343,10 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Done |
 | 7 | Reports, report cards, promotion | Year-end ready | Done |
 | 8 | Testing with real staff, fixes | Test version | Done (by the school owner, Steps 0 to 7) |
-| UI v2 | User-friendly interface and animation (section 11, parts A to F) | Easier and safer to use | Parts A, B and C done; D to F next |
+| 7A | **Report card templates**: upload the school's own form and map values to it (4.8.1) | School's own card prints | Planned |
+| UI v2 | User-friendly interface and animation (section 11, parts A to F) | Easier and safer to use | Parts A and B done; C to F next |
 | 9 | **Timetable, per-period attendance, live alerts** | Period attendance ready | |
-| 10 | Public website (news, events, gallery, admissions, results lookup, parent and student logins) | Full site | |
+| 10 | **Public website** without sign-in or sign-up (4.11): news, events, announcements, gallery, downloads, admissions pre-registration, contact, results lookup with ID and PIN, publisher permission | Full site | Planned |
 | 11 | Deploy to the chosen hosting (hosting still TBD) | Live | |
 
 ### 6.1 Step 4 scope: student registration and yearly enrollment
@@ -309,6 +387,9 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 - Step 6 attendance: teachers write only the last 3 school days (today included); the administration can correct any day of an open year; excused needs a note; only absent counts toward the limit; the limit can be set per section; flagged students appear on screen (no messages until Step 9). Details in 4.7 "As built".
 - UI v2 (section 11): the next work is a user-friendly interface and animation plan, delivered in parts A to F, each tested by the school owner. No database change. Step 9 (timetable and per-period attendance) follows it.
 - Step 7: promotion rule is the overall yearly average at or above the pass mark; the director approves; export to Excel and PDF is skipped for now; report cards print from the browser. Details in 4.8 and 4.9 "As built".
+- **Public website (decided):** no sign-in and no sign-up; no student or parent logins. Results are checked with the student ID plus a school-issued PIN (hash stored). Only results the director or vice director has published are visible. Details in 4.11.
+- **Publishing (decided):** the director, vice director and staff with the Publisher permission publish public content; the system admin does not. The director or vice director grants the permission (to confirm).
+- **Report card (decided):** the school's own printed form is uploaded as a background; the subject names stay as printed and the system fills only the numbers, by linking each printed row to a subject. Details in 4.8.1.
 - Hosting is undecided (TBD). The school's final branding (logo, official colors) is undecided; until then the working UI palette and animation plan in section 10 is used.
 
 ## 8. Still needed from you
@@ -324,6 +405,10 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 9. Step 6 assumptions to confirm: (a) the 3-day edit window counts today and the two school days before it; (b) an excused absence must have a note; (c) a unit leader can register attendance only for a section they also teach; (d) a locked semester does not block attendance; (e) the homeroom teacher, not the subject teachers, normally takes the daily roll call, but a subject teacher of the section is also allowed.
 
 10. Step 7 assumptions to confirm: (a) the overall average is the plain mean of the subject yearly averages (every subject counts the same); (b) a student with a missing semester result in any subject is "incomplete" and is not suggested for promotion; (c) a Grade 12 student below the pass mark repeats Grade 12; (d) a saved promotion decision is final on the screen; (e) the card shows the homeroom teacher and director as blank signature lines, not names.
+
+11. **Report card form (4.8.1):** please send the school's current report card as a clean PDF or scan (front and back). With it, please say: (a) which boxes it has besides the subject rows (total, average, rank, result, attendance, conduct, remarks, signatures, date); (b) whether Grades 9 to 12 use the same form, and whether the Semester 1, Semester 2 and yearly cards differ; (c) the paper size (A4 assumed); (d) **conduct and teacher remarks** are not stored in the system today: should they be added (a field per student per semester), or left blank for handwriting?
+12. **Public website (4.11):** (a) who gets the Publisher permission, and may the director and vice director both grant it; (b) the contact details, address and map location; (c) the admissions requirements, dates and fees to show, and the pre-registration fields; (d) whether teachers' names may appear on the Staff page; (e) the policy for photos of students (consent) and whether gallery captions may name students; (f) how PINs are handed out (printed on the report card, a separate slip, or at registration); (g) who may issue a new PIN (registrar, director and vice director assumed); (h) a domain name for the site.
+13. **Hosting limits the public site:** a per-visitor limit on PIN attempts and good web addresses for news pages depend on the hosting choice (item 1).
 
 ## 9. Working rules (how we deliver and test)
 
@@ -473,7 +558,7 @@ Added after Step 7. The school owner has tested Steps 0 to 7 and asked for a pla
 ### 11.2 Parts and order
 Each part is delivered as its own update (zip with only added and edited files, working rule 1) and is tested by the school owner before the next part starts.
 
-**Status:** Parts A and B are built (first UI v2 update, see "As built" under 11.4). Part C is built (second UI v2 update, see "As built" under 11.5). Parts D to F are planned.
+**Status:** Parts A and B are built (first UI v2 update, see "As built" under 11.4). Parts C to F are planned.
 
 | Part | What | Result |
 |---|---|---|
@@ -526,18 +611,6 @@ The dashboard shows what the signed-in person does most, by role. The module car
 - **Unsaved changes:** leaving a half-filled form (registration, structure editor) asks first.
 - **Messages:** save, error and warning messages use one style and one place (top of the content); errors stay until dismissed.
 - **Undo** is offered only where it is safe and simple (for example a mistaken roll-call change before saving). Nothing is undone silently in the database.
-
-**As built in Part C - decisions and assumptions**
-- **One dialog for every question.** All 13 places that used the browser's plain confirm window now use the same styled dialog (`useConfirm`): deleting a section, a calendar entry or a guardian; closing an academic year; finalizing and reopening marks (finalizing with missing marks is its own dialog); saving or deleting a mark structure (the dialog lists what will change, for example how many marks will be deleted); removing a staff login; changing a student's stream or status; creating more than 30 sections at once; approving year-end promotion.
-- **Wording:** each dialog has a title that names the action, a line saying what changes and what cannot be undone, and a primary button worded as the action ("Delete entry", "Finalize marks", "Approve and save"). A dialog that deletes or cannot be undone is red-topped and starts with the focus on **Cancel**, so pressing Enter by mistake changes nothing. Escape, the Cancel button and a tap outside the box all cancel. Focus stays inside the dialog and returns to the button that opened it; the page behind does not scroll.
-- **Unsaved changes:** the registration form and the mark structure editor ask before a menu or other link inside the app takes the person away, and the browser asks before closing or refreshing the tab. Switching language does **not** ask, because the form is kept. **Not covered:** the browser's Back button (the guard works for links, not for Back).
-- **Saved-row highlight:** a row that was just added or changed glows gold for about two seconds on the lists of academic years, calendar entries, subjects, sections and departments. It is worked out by comparing the list before and after reloading, so nothing is saved or kept; the first load and a change of filter (for example another year) never flash. The highlight repaints only that one row, so it is the single exception to the "transform and opacity only" rule of 10.6.
-- **Messages:** error messages now have a close button and stay until closed; "Saved." still fades away by itself. All messages remain in the same place (top of the content).
-- **Inline errors (registration, step 1):** the missing names, sex and date of birth show a red message under their own field, linked to it for screen readers; after a failed Next, focus moves to the first problem. A message goes away as soon as that field is fixed. The summary list at the top stays. Other steps and forms still show their messages in the summary only (to be extended screen by screen).
-- **Marks grid:** a cell that was just saved shows a short green ring; the line above the grid now says "Some marks were not saved. Fix the cells marked in red." while any cell has an error; failed cells already showed their own message.
-- **Moved forward from Part D:** the fade and scale of the dialog itself (part of the dialog, so it ships with it).
-- **Not included:** *Undo*. Part C of the plan allowed it only where safe and simple; no such place was found (roll call saves with an explicit Save button, and nothing is undone in the database silently).
-- **Assumptions to confirm:** (a) a saved promotion decision still cannot be changed on screen, so its dialog says so; (b) the Amharic dialog wording is new and needs a native speaker; (c) the old plain texts (for example `common.confirmDelete`) are no longer used by these screens but are left in the language files.
 
 ### 11.6 Part D: animation
 Same rules as 10.6. New and remaining motion, each with its purpose:
