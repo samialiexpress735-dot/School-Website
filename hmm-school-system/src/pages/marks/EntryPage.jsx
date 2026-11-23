@@ -301,7 +301,7 @@ function GridBody({ refData, year, semester, section, subject, structure, enroll
           {t("marks.entry.finalized", { date: formatEc(String(lock.locked_at).slice(0, 10), lang) })}
         </p>
       )}
-      <div className="mark-bar">
+      <div className="mark-bar sticky-actions">
         <p className={hasErr ? "small msg-err" : "small"} role="status" aria-live="polite">
           {t("marks.entry.counts", { entered, total })} · {saving > 0 ? t("marks.entry.saving") : hasErr ? t("marks.entry.hasErrors") : t("marks.entry.allSaved")}
         </p>

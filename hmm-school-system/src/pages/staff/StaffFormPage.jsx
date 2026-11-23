@@ -246,7 +246,7 @@ export default function StaffFormPage() {
         </div>
 
         <p className="muted small full">{t("staff.photoLater")}</p>
-        {editable && <div className="formgrid-action"><button type="submit" className="btn-small">{t("common.save")}</button></div>}
+        {editable && <div className="formgrid-action sticky-actions"><button type="submit" className="btn-small">{t("common.save")}</button></div>}
       </form>
 
       {!isNew && record.data && <AccountPanel staff={record.data} onChanged={record.reload} />}

@@ -48,7 +48,7 @@ export default function StaffListPage() {
 
       {rows.length === 0 ? <p>{t("common.noData")}</p> : (
         <div className="tablewrap">
-          <table>
+          <table className="stack">
             <thead>
               <tr>
                 <th>{t("staff.employeeId")}</th><th>{t("common.name")}</th><th>{t("staff.type")}</th>
@@ -58,13 +58,13 @@ export default function StaffListPage() {
             <tbody>
               {rows.map((s) => (
                 <tr key={s.id}>
-                  <td>{s.employee_id || "—"}</td>
-                  <th scope="row"><Link to={`/${lang}/staff/${s.id}`}>{fullName(s, lang)}</Link></th>
-                  <td>{t(`staff.types.${s.staff_type}`)}{s.position ? <span className="muted"> · {s.position}</span> : null}</td>
-                  <td>{pick(s.departments, lang) || "—"}</td>
-                  <td>{s.phone || "—"}</td>
-                  <td>{t(`staff.statuses.${s.employment_status}`) }</td>
-                  <td>{s.profile_id ? <span className="pill">{t("staff.linked")}</span> : <span className="muted">{t("staff.notLinked")}</span>}</td>
+                  <td data-label={t("staff.employeeId")}>{s.employee_id || "—"}</td>
+                  <th scope="row" className="stack-title"><Link to={`/${lang}/staff/${s.id}`}>{fullName(s, lang)}</Link></th>
+                  <td data-label={t("staff.type")}>{t(`staff.types.${s.staff_type}`)}{s.position ? <span className="muted"> · {s.position}</span> : null}</td>
+                  <td data-label={t("staff.department")}>{pick(s.departments, lang) || "—"}</td>
+                  <td data-label={t("staff.phone")}>{s.phone || "—"}</td>
+                  <td data-label={t("staff.status")}>{t(`staff.statuses.${s.employment_status}`)}</td>
+                  <td data-label={t("staff.hasAccount")}>{s.profile_id ? <span className="pill">{t("staff.linked")}</span> : <span className="muted">{t("staff.notLinked")}</span>}</td>
                 </tr>
               ))}
             </tbody>

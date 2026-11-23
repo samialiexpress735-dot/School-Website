@@ -320,7 +320,7 @@ export default function StructureEditor({ draft: initial, title, scopeText, cont
       </div>
 
       {!ro && (
-        <div className="row-actions">
+        <div className="row-actions sticky-actions">
           <button className="btn" disabled={!valid || busy || status !== "ok"} aria-busy={busy} onClick={save}>{t("marks.editor.save")}</button>
           {d.id && <button className="btn-small danger" disabled={busy} onClick={remove}>{t("marks.editor.delete")}</button>}
         </div>

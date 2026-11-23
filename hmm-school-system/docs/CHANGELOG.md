@@ -2,6 +2,20 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## UI v2, Part E – phone and Amharic polish
+- Added: `tests/stackTables.test.js`
+- Edited: `src/pages/staff/StaffListPage.jsx`, `src/pages/staff/AssignmentsPage.jsx`, `src/pages/staff/StaffFormPage.jsx`, `src/pages/marks/ResultsPage.jsx`, `src/pages/marks/EntryPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No database change. No new texts, so no change to the language files.
+- What changed:
+  - **Cards on phones:** staff list, teacher assignments (both tables) and Marks > Results (both views) become cards below 720 px, like the student list.
+  - **Sticky action bar below 640 px:** Back/Next/Save on registration, Save on the staff form, Save/Delete in the structure editor, Finalize/Reload on the marks grid.
+  - **Touch targets of 44 px** on phones and touch screens: the "Move to" menu, mark cells, table and breadcrumb links, the close button of messages, checkboxes.
+  - **Amharic:** long labels wrap in buttons, tabs, pills, menu and tiles; looser line height; smaller status buttons on a phone.
+- After this update: on a phone (or a narrow window), in English and Amharic, open Staff, Staff > Teacher assignments, Marks > Results, the registration form, the marks grid and the allocation board; check that nothing is cut off, the bottom bars stay in reach and every button is easy to tap.
+- Tested: `npm test` passes (55 tests, 2 new: every cell of a card table has a label, and the three tables use the card layout). The app builds. **Not** viewed in a real browser or on a phone, and not on an old computer.
+- Next: Part F waits for the school's logo and official colors (section 8, item 6). Other open work: the report card template designer (4.8.1, needs the school's blank form), Step 9 (timetable and per-period attendance) and Step 10 (public website).
+
 ## UI v2, Part D – remaining animation and shaped loading placeholders
 - Added: `src/lib/motion.js`, `tests/motion.test.js`
 - Edited: `src/lib/ui.jsx`, `src/components/Shell.jsx`, `src/pages/attendance/RollCallPage.jsx`, `src/pages/marks/EntryPage.jsx`, `src/pages/students/AllocationPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/reports/RosterPage.jsx`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

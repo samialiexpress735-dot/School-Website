@@ -610,3 +610,39 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--te
 .sk-line.w30 { width: 30%; }
 .sk-box { height: 2.75rem; border-radius: var(--radius-sm); border: 1px solid var(--line); background: linear-gradient(90deg, var(--paper), #fff, var(--paper)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 @media (max-width: 640px) { .sk-row { grid-template-columns: 1fr 1fr; } .sk-row .sk-line:nth-child(3) { display: none; } }
+
+/* ==========================================================================
+   UI v2, Part E: phone and Amharic polish. No new motion.
+   ========================================================================== */
+
+/* Tables that become cards on phones: the name is the card title, without a label */
+@media (max-width: 720px) {
+  table.stack .stack-title { justify-content: flex-start; text-align: start; font-weight: 700; font-size: 1.05rem; padding-bottom: 0.4rem; }
+  table.stack td:not([data-label])::before { content: none; }
+  table.stack tfoot tr { background: var(--cream); }
+}
+
+/* Main action bar stays in reach on phones (Save, Finalize, Next) */
+@media (max-width: 640px) {
+  .sticky-actions { position: sticky; bottom: 0; z-index: 20; margin-inline: -1rem; padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 12px rgba(15, 46, 77, 0.08); }
+  .sticky-actions .btn, .sticky-actions .btn-small { flex: 1 1 auto; }
+  .wizard-actions { position: sticky; bottom: 0; z-index: 20; margin-inline: -1rem; padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 12px rgba(15, 46, 77, 0.08); }
+  .wizard-actions .btn-small { flex: 1 1 0; }
+}
+
+/* Touch targets: the compact controls kept small on desktop reach 44 px on phones and touch screens */
+@media (max-width: 640px), (pointer: coarse) {
+  .card-student select { min-height: 2.75rem; }
+  .mark-input { min-height: 2.75rem; min-width: 4.25rem; }
+  .tablewrap td a, .tablewrap th a, .recent a, .breadcrumb a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+  .flash-close { min-width: 2.75rem; min-height: 2.75rem; }
+  input[type="checkbox"], input[type="radio"] { min-width: 1.5rem; min-height: 1.5rem; }
+}
+
+/* Amharic and long labels wrap instead of breaking the layout */
+.btn, .btn-small, .seg-btn, .tabs a, .pill, .badge, .sidebar a, .stat, .shortcuts a { overflow-wrap: anywhere; }
+.btn, .btn-small { white-space: normal; text-align: center; }
+.tabs { flex-wrap: wrap; }
+html[lang="am"] .btn, html[lang="am"] .btn-small, html[lang="am"] .seg-btn, html[lang="am"] .tabs a, html[lang="am"] .pill { line-height: 1.5; }
+html[lang="am"] th, html[lang="am"] td { line-height: 1.7; }
+@media (max-width: 640px) { html[lang="am"] .seg-btn { font-size: 0.82rem; padding-inline: 0.1rem; } }

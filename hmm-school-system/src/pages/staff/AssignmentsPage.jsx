@@ -179,16 +179,16 @@ export default function AssignmentsPage() {
 
           {sectionSubjects.length === 0 ? <p>{t("assignments.noSubjects")}</p> : (
             <div className="tablewrap" style={{ marginTop: "1rem" }}>
-              <table>
+              <table className="stack">
                 <thead><tr><th>{t("assignments.subject")}</th><th>{t("assignments.periods")}</th><th>{t("assignments.teacher")}</th></tr></thead>
                 <tbody>
                   {sectionSubjects.map(({ gs, subject }) => {
                     const a = assignments.find((x) => x.section_id === section.id && x.subject_id === subject.id);
                     return (
                       <tr key={subject.id}>
-                        <th scope="row">{pick(subject, lang)}</th>
-                        <td>{gs.periods_per_week ?? "—"}</td>
-                        <td>
+                        <th scope="row" className="stack-title">{pick(subject, lang)}</th>
+                        <td data-label={t("assignments.periods")}>{gs.periods_per_week ?? "—"}</td>
+                        <td data-label={t("assignments.teacher")}>
                           <select aria-label={`${pick(subject, lang)} – ${t("assignments.teacher")}`} value={a?.staff_id || ""} disabled={!editable} onChange={(e) => setTeacher(subject.id, e.target.value)}>
                             <option value="">{t("assignments.noTeacher")}</option>
                             {teachers.map((x) => <option key={x.id} value={x.id}>{fullName(x, lang)}</option>)}
@@ -217,14 +217,14 @@ export default function AssignmentsPage() {
         )}
         {workload.length === 0 ? <p>{t("assignments.noWorkload")}</p> : (
           <div className="tablewrap">
-            <table>
+            <table className="stack">
               <thead><tr><th>{t("assignments.teacher")}</th><th>{t("assignments.sectionsCount")}</th><th>{t("assignments.totalPeriods")}</th></tr></thead>
               <tbody>
                 {workload.map((w) => (
                   <tr key={w.teacher.id}>
-                    <th scope="row">{fullName(w.teacher, lang)}</th>
-                    <td>{w.sections}</td>
-                    <td>{w.periods} {w.periods > max && <span className="pill warn">{t("assignments.overloaded")}</span>}</td>
+                    <th scope="row" className="stack-title">{fullName(w.teacher, lang)}</th>
+                    <td data-label={t("assignments.sectionsCount")}>{w.sections}</td>
+                    <td data-label={t("assignments.totalPeriods")}>{w.periods} {w.periods > max && <span className="pill warn">{t("assignments.overloaded")}</span>}</td>
                   </tr>
                 ))}
               </tbody>

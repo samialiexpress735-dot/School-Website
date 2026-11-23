@@ -177,7 +177,7 @@ function ResultsTable({ refData, yearId, section, subjects, view }) {
     });
     return (
       <div className="tablewrap">
-        <table>
+        <table className="stack">
           <thead>
             <tr>
               <th>{t("marks.student")}</th>
@@ -189,14 +189,14 @@ function ResultsTable({ refData, yearId, section, subjects, view }) {
           <tbody>
             {list.map(({ e, per, overall, complete }) => (
               <tr key={e.id}>
-                <td>{fullName(e.students, lang)}</td>
+                <td className="stack-title">{fullName(e.students, lang)}</td>
                 {per.map((y, i) => (
-                  <td key={subjects[i].id} className="center">
+                  <td key={subjects[i].id} className="center" data-label={pick(subjects[i], lang)}>
                     {y.average === null ? <span className="muted">—</span> : <span className={y.complete ? "" : "muted"} style={y.complete ? undefined : { fontStyle: "italic" }}>{fmt(y.average, refData.yearlyPlaces)}</span>}
                   </td>
                 ))}
-                <td className="center"><strong>{overall === null ? "—" : fmt(overall, refData.yearlyPlaces)}</strong></td>
-                <td>{pill(overall, complete)}</td>
+                <td className="center" data-label={t("marks.results.overall")}><strong>{overall === null ? "—" : fmt(overall, refData.yearlyPlaces)}</strong></td>
+                <td data-label={t("common.status")}>{pill(overall, complete)}</td>
               </tr>
             ))}
           </tbody>
@@ -210,7 +210,7 @@ function ResultsTable({ refData, yearId, section, subjects, view }) {
   const classAvg = avgs.length ? avgs.reduce((s, v) => s + v, 0) / avgs.length : null;
   return (
     <div className="tablewrap">
-      <table>
+      <table className="stack">
         <thead>
           <tr>
             <th>{t("marks.student")}</th>
@@ -222,18 +222,18 @@ function ResultsTable({ refData, yearId, section, subjects, view }) {
         <tbody>
           {list.map(({ e, perSem, yearly }) => (
             <tr key={e.id}>
-              <td>{fullName(e.students, lang)}</td>
-              {perSem.map((r, i) => (<td key={sems[i].id} className="center">{cell(r && !r.none ? r : null)}</td>))}
-              <td className="center"><strong>{yearly.average === null ? "—" : fmt(yearly.average, refData.yearlyPlaces)}</strong></td>
-              <td>{pill(yearly.average, yearly.complete)}</td>
+              <td className="stack-title">{fullName(e.students, lang)}</td>
+              {perSem.map((r, i) => (<td key={sems[i].id} className="center" data-label={t("marks.semesterN", { n: sems[i].number })}>{cell(r && !r.none ? r : null)}</td>))}
+              <td className="center" data-label={t("marks.yearlyAverage")}><strong>{yearly.average === null ? "—" : fmt(yearly.average, refData.yearlyPlaces)}</strong></td>
+              <td data-label={t("common.status")}>{pill(yearly.average, yearly.complete)}</td>
             </tr>
           ))}
         </tbody>
         {classAvg !== null && (
           <tfoot>
             <tr>
-              <td colSpan={sems.length + 1}>{t("marks.classAverage")}</td>
-              <td className="center"><strong>{fmt(classAvg, 1)}</strong></td>
+              <td colSpan={sems.length + 1} className="stack-title">{t("marks.classAverage")}</td>
+              <td className="center" data-label=""><strong>{fmt(classAvg, 1)}</strong></td>
               <td />
             </tr>
           </tfoot>
