@@ -2,6 +2,27 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Blueprint update – UI v2 plan (user-friendly interface and animation)
+- Added: nothing
+- Edited: `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: none. No application code or database changed.
+- What changed: Step 8 (testing) is recorded as done by the school owner. New **section 11, UI v2 plan**, in six parts: A navigation and orientation (left sidebar, role-aware menu, breadcrumbs, skip link), B "my work" dashboard per role (shortcuts, stat tiles, empty states), C feedback and safety (styled dialogs instead of the browser confirm window, saved-row highlight, inline errors, unsaved-changes warning), D animation (CSS only, same rules as 10.6), E phone and Amharic polish, F branding and print polish (when the logo is decided). It also lists acceptance checks and four questions for the school owner (11.10). The progress line, the step table (section 6), the decisions list (section 7) and 10.8 point to it.
+- Next: answer the questions in 11.10, then Parts A and B are built as the first UI v2 update.
+
+## Step 7 – Reports, report cards and year-end promotion
+- Added: `supabase/migrations/012_step7_promotion.sql`, `src/lib/reports.js`, `src/lib/reportsData.js`, `tests/reports.test.js`, `src/pages/reports/` (ReportsLayout, ReportsParts, RosterPage, ReportCardPage, SheetsPage, PromotionPage)
+- Edited: `src/App.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/lib/roles.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `012_step7_promotion.sql` (once, after 001-011). It only adds one function; no existing data is changed.
+- What changed:
+  - **Reports** in the main menu with four tabs: **Section roster** (yearly average per subject, overall average, rank, pass or fail, class averages), **Report cards** (one student or the whole section, one page per student, printed from the browser in the page language), **Subject sheets** (one subject in one section with rank, highest, lowest, class average, number passed) and **Promotion**.
+  - **Promotion rule (decided):** overall yearly average at or above the pass mark moves up (Grade 12 graduates); otherwise the student repeats. The screen suggests, the director, vice director or system admin approves. Students with missing marks get no suggestion.
+  - **Database:** new function `apply_promotions` saves a whole group of decisions all or nothing. It creates the new-year enrollments (no section yet; Grade 10 to 11 needs a stream), marks Grade 12 graduates, writes the `promotions` rows and is audited.
+  - **Not included (by decision or later):** export to Excel or PDF (skipped), changing a saved decision, a two-language card.
+- After running: sign in as the director, open **Reports > Promotion**, choose the old and new year and a grade, check the table and approve; then sign in as the registrar and place the new students on **Students > Section allocation**. Before that, make sure the new academic year exists (School structure > Academic years).
+- Tested: SQL 001 to 012 run in order on a local PostgreSQL. `apply_promotions` was checked as a teacher and a registrar (both refused), with an earlier target year (refused), with a Grade 10 student without a stream (refused and nothing else in the same call saved), Grade 11 graduating and Grade 12 moving up (refused), a full valid batch (3 moved up, 2 repeating, 1 graduated; streams, statuses and no section as expected), and a second decision for the same student (refused); 6 promotion rows and 6 audit lines. `npm test` passes (31 tests, 6 new for ranking, suggestion, incomplete students and averages). The app builds, and every new English and Amharic text key exists in both languages. The screens were **not** clicked through in a real browser or on a phone, and printing was not tried: test Roster, Report cards (print preview) and Promotion on your Supabase first. The Amharic wording is new and should be read by a native speaker.
+
 ## Step 6 fix – Attendance summary showed zeros when semester dates were empty
 - Added: `supabase/migrations/011_step6_fix_semester_dates.sql`, `tests/semesterDates.test.js`
 - Edited: `src/lib/attendance.js`, `src/pages/attendance/AttendanceParts.jsx`, `src/pages/attendance/RollCallPage.jsx`, `src/pages/attendance/SummaryPage.jsx`, `src/pages/attendance/FlagsPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

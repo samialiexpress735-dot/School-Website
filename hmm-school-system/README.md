@@ -5,7 +5,7 @@
 Bilingual (English default, Amharic) school administration system.
 The full plan is in **`docs/BLUEPRINT.md`**.
 
-## What is in this version (Steps 0 to 4)
+## What is in this version (Steps 0 to 7)
 
 | Step | Status | What |
 |---|---|---|
@@ -14,14 +14,15 @@ The full plan is in **`docs/BLUEPRINT.md`**.
 | 2 | Done | Academic years and semesters, school calendar (Mon-Fri, holidays), subjects and subjects per grade, sections with morning/afternoon shifts |
 | 3 | Done | Staff (teaching and non-teaching), login account linking, departments, teacher assignments, homeroom teachers, workload |
 | 4 | Done | Student registration (six steps), student ID, yearly enrollment, section allocation board, import of existing students |
-| 5 | Next | Configurable marks |
-
-Staff and student screens come in later steps.
+| 5 | Done | Configurable marks, two semesters, results |
+| 6 | Done | Daily attendance, absence limit |
+| 7 | Done | Section roster, report cards, subject sheets, year-end promotion |
+| 8 | Next | Testing with real staff |
 
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001` to `011`
+- `supabase/migrations/` – database files, run in order: `001` to `012`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -34,7 +35,7 @@ Staff and student screens come in later steps.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`, then `011_step6_fix_semester_dates.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`, then `011_step6_fix_semester_dates.sql`, then `012_step7_promotion.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):
@@ -74,6 +75,10 @@ Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expan
 ## Marks structures
 - The system admin, director and vice director set up the mark structure of every subject (**Marks > Structures**) and the school settings.
 - A **teacher** can set up and edit the structure of the subjects they are assigned to. Teachers of the same subject and grade share one structure. When an assessment already has marks, the system asks for confirmation before deleting marks or recalculating results. A finalized section, a locked semester or a closed year cannot be changed by a teacher.
+
+## Reports and promotion
+- **Reports > Section roster / Report cards / Subject sheets:** pick the year and section; use **Print** (the browser's print dialog also saves as PDF). Report cards print one page per student in the page language.
+- **Reports > Promotion** (director, vice director, system admin): choose the old year, the new year and a grade. The table suggests *moves up* when the overall yearly average is at or above the pass mark, otherwise *repeats* (Grade 12: *graduates*). Change what you like, choose a stream for students moving to Grade 11, then **Approve and save**. Create the new academic year first. Afterwards the registrar places the new students on Students > Section allocation.
 
 ## Giving staff a login
 1. In Supabase open **Authentication > Users > Add user**, enter the person's email and a password, and tick auto-confirm.

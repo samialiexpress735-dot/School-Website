@@ -27,3 +27,7 @@ export const STREAM_CHANGERS = ["system_admin", "registrar", "director", "vice_d
 export const ATTENDANCE_ADMINS = ["system_admin", "director", "vice_director"];
 export const ATTENDANCE_TAKERS = ["teacher", "unit_leader"];
 export const ATTENDANCE_VIEW_ALL = ["system_admin", "director", "vice_director", "unit_leader", "registrar"];
+
+// Step 7: year-end promotion is decided and approved by the director, vice director and system admin only.
+// The database enforces it (012_step7_promotion.sql); this list only decides what the screens offer.
+export const PROMOTION_DECIDERS = ["system_admin", "director", "vice_director"];

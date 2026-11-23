@@ -428,3 +428,26 @@ details.subpanel[open] > summary { margin-bottom: 0.5rem; }
   .seg { display: grid; grid-template-columns: repeat(4, 1fr); }
   .seg-btn { min-width: 0; padding-inline: 0.2rem; font-size: 0.9rem; }
 }
+
+/* ---------- Step 7: reports, report cards and printing ---------- */
+.report-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 1.5rem; margin: 0 0 1.5rem; break-inside: avoid; }
+.rc-head { border-bottom: 3px solid var(--gold); padding-bottom: 0.75rem; margin-bottom: 1rem; text-align: center; }
+.rc-title { display: flex; flex-direction: column; gap: 0.15rem; }
+.rc-title h2 { margin: 0.5rem 0 0; font-size: 1.25rem; }
+.rc-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.5rem 1.5rem; margin: 0 0 1rem; }
+.rc-info div { display: flex; flex-direction: column; }
+.rc-info dt { font-size: 0.75rem; color: var(--muted); }
+.rc-info dd { margin: 0; font-weight: 700; }
+.rc-sign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 2.5rem; }
+.rc-sign div { border-top: 1px solid var(--ink); padding-top: 0.25rem; font-size: 0.85rem; }
+
+@media print {
+  header, .mainnav, .footer, .tabs, .toolbar, .no-print, .skip-link { display: none !important; }
+  body, .page, .content { background: #fff !important; }
+  .content { max-width: none; padding: 0; margin: 0; animation: none; }
+  .panel { border: 0; box-shadow: none; padding: 0; }
+  .report-card { border: 0; border-radius: 0; padding: 0; margin: 0; page-break-after: always; break-after: page; }
+  .report-card:last-of-type { page-break-after: auto; break-after: auto; }
+  table { font-size: 0.9rem; }
+  a { color: inherit; text-decoration: none; }
+}

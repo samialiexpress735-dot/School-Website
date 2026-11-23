@@ -4,7 +4,7 @@
 
 Version 1 · Phase 1: School Administration System
 
-**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). Step 7 (reports, report cards, promotion) is next. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
+**Progress:** Steps 0 (skeleton, login, languages), 1 (database and security), 2 (school structure) and 3 (staff and teacher assignments) are done. The **UI foundation update** (section 10) has been applied to the existing screens. **Step 4 (students, yearly enrollment, section allocation and import) is done** (update `007_step4_students.sql`). **Step 5 (configurable marks, two semesters each ending in a final exam) is done** (update `008_step5_marks.sql`), **including teachers editing the structure of their own subject** (update `009_step5_teacher_structures.sql`). **Step 6 (daily attendance: roll call, 3-school-day edit window, absence limit per section, summaries) is done** (update `010_step6_attendance.sql`, section 4.7 "As built"). A **Step 6 fix** (update `011_step6_fix_semester_dates.sql`) corrects the attendance summary when semester dates were empty (section 4.7). **Step 7 (reports, report cards, promotion) is done** (update `012_step7_promotion.sql`, sections 4.8 and 4.9 "As built"). Step 8 (testing) was done by the school owner. The next stage is the **UI v2 plan** (section 11): navigation, role dashboards, feedback and animation, so the system is user friendly. A **design review and polish update** (section 10.9) has been applied on top of the UI foundation.
 **Steps 1 to 3 brought in line with the decisions update (update `006_blueprint_sync.sql`):** subject lists per grade and stream are now kept per academic year; the draft subject list is reconciled with section 4.5; the starting subject structure is loaded for the current year; section creation has no fixed limit and no default capacity; the sections table shows the real homeroom teacher; the absence threshold (5 per semester) is stored as a setting.
 **Blueprint revision (decisions update, before Step 4):** subjects by grade and stream are configurable data per academic year (Amharic in every stream of Grades 11 and 12); marks use a flexible, administrator-configured assessment engine instead of one fixed formula; there is no fixed number of sections; the absence threshold is confirmed as 5 absences per semester; hosting and the school's final branding (logo, official colors) are undecided (TBD); a working UI plan with a proposed palette and planned animations is added as section 10. No application code or database changed in this revision.
 **Change from v1 text:** "Homeroom Teacher" is not a separate login role. A homeroom teacher is a teacher who is set as the homeroom of a section (`sections.homeroom_staff_id`), and gets read access to that section.
@@ -217,10 +217,28 @@ Views and reports: daily sheet per section, student attendance history across ye
 ### 4.8 Results and reports
 - Student report card (English and Amharic), section roster with rank, subject result sheets
 - Pass or fail per subject and promotion decision at year end
-- Export to Excel and PDF
+- Export to Excel and PDF (**not built; skipped for now by decision of the school owner**, the screens print instead)
+
+**As built in Step 7 (reports) - decisions and assumptions**
+- **Screens (Reports):** *Section roster* (every student with the yearly average per subject, overall average, rank, pass/fail, class averages), *Report cards* (one student or the whole section, one page per student, printed from the browser), *Subject sheets* (one subject in one section with rank, highest, lowest, class average and the number who passed) and *Promotion* (4.9).
+- **Calculation:** nothing new is calculated in the database. The screens use the same engine as Marks > Results: each semester result as a percent of its own maximum, the yearly average as the mean of the two semesters, the overall average as the mean of the subject yearly averages, rounded with `yearly_rounding_places`.
+- **Rank:** by overall average within the section; students with the same average share a rank (1, 2, 2, 4). A student with no marks at all gets no rank.
+- **Missing marks:** a student is **incomplete** when any subject of the grade and stream lacks a semester result, or has no mark structure. Incomplete results are shown in italics, are never counted as zero, and get no promotion suggestion.
+- **Language and printing:** a report card is printed in the language of the page (English or Amharic); there is no two-language card yet. Printing uses the browser's print dialog (save as PDF there). There is no Excel or PDF export (skipped by decision).
+- **Who sees what:** system admin, director, vice director and unit leaders see every section. A homeroom teacher sees the roster and report cards of their section. A subject teacher sees only the *Subject sheets* of their own subject and section. The database still decides what can really be read.
 
 ### 4.9 Promotion and year rollover
 - At year end, promote eligible students to the next grade as new enrollments, with the Director's approval. Repeaters stay in the same grade. Grade 12 completers are marked as graduated.
+
+**As built in Step 7 (promotion) - decisions and assumptions**
+- **Rule (decided by the school owner):** a student whose **overall yearly average is at or above the pass mark** (setting `pass_mark`, default 50%) moves up; any other student repeats. A Grade 12 student at or above the pass mark graduates. There is no rule about failing single subjects.
+- **Suggestion, then approval:** the Promotion screen suggests a decision for every student; the director, vice director or system admin can change any decision and must approve. Nothing is saved before the approval. A student with incomplete marks gets no suggestion and must be decided by hand (or after the marks are finished).
+- **One database function, all or nothing:** `apply_promotions` saves a whole group of decisions in one step; if any row breaks a rule, nothing is saved. Only the system admin, director and vice director may call it.
+- **What it creates:** *moves up* = a new enrollment in the new year, next grade, status `promoted`, **no section yet**; *repeats* = a new enrollment, same grade and stream, status `repeater`, no section yet; *graduates* (Grade 12 only) = the enrollment and the student are marked `graduated`, no new enrollment. Earlier enrollments are never edited, except that a graduating Grade 12 enrollment gets the status `graduated`. Each decision is one row in `promotions` (who, when, which year) and is audited.
+- **Stream:** Grade 9 to Grade 10 needs none; Grade 10 to Grade 11 needs the director to choose Natural or Social Science for every student (a bulk choice is offered); Grade 11 to Grade 12 and repeaters keep their stream.
+- **Placing students:** the new enrollments have no section. The registrar places them on Students > Section allocation, as for any new year.
+- **Rules in the database:** the new year must be later than the old year and open; only students of the old year who are not withdrawn or graduated; a student cannot get two enrollments in the new year; one decision per enrollment (a saved decision cannot be changed on the screen); Grade 12 cannot move up; only Grade 12 can graduate; withdrawal is not a promotion decision (it stays under Students).
+- **Not in Step 7:** changing or undoing a saved decision (needs a database correction by the administrator for now), export to Excel or PDF, and a message to parents.
 
 ### 4.10 Security and safety
 - Login required for everything in Phase 1
@@ -246,8 +264,9 @@ Views and reports: daily sheet per section, student attendance history across ye
 | 4 | Student registration and yearly enrollment (scope in 6.1) | Students ready | Done |
 | 5 | Configurable assessment structures, marks entry and calculations (4.6) | Marks ready | Done |
 | 6 | **Daily attendance**, 3-day edit window, absence number (default 5), attendance views | Attendance ready | Done |
-| 7 | Reports, report cards, promotion | Year-end ready | Next |
-| 8 | Testing with real staff, fixes | Test version | |
+| 7 | Reports, report cards, promotion | Year-end ready | Done |
+| 8 | Testing with real staff, fixes | Test version | Done (by the school owner, Steps 0 to 7) |
+| UI v2 | User-friendly interface and animation (section 11, parts A to F) | Easier and safer to use | Next |
 | 9 | **Timetable, per-period attendance, live alerts** | Period attendance ready | |
 | 10 | Public website (news, events, gallery, admissions, results lookup, parent and student logins) | Full site | |
 | 11 | Deploy to the chosen hosting (hosting still TBD) | Live | |
@@ -288,6 +307,8 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 - The registrar chooses the stream at registration; the director and vice director can change it later. Existing students of Grades 9 to 12 can be imported.
 - Photo upload is skipped for now.
 - Step 6 attendance: teachers write only the last 3 school days (today included); the administration can correct any day of an open year; excused needs a note; only absent counts toward the limit; the limit can be set per section; flagged students appear on screen (no messages until Step 9). Details in 4.7 "As built".
+- UI v2 (section 11): the next work is a user-friendly interface and animation plan, delivered in parts A to F, each tested by the school owner. No database change. Step 9 (timetable and per-period attendance) follows it.
+- Step 7: promotion rule is the overall yearly average at or above the pass mark; the director approves; export to Excel and PDF is skipped for now; report cards print from the browser. Details in 4.8 and 4.9 "As built".
 - Hosting is undecided (TBD). The school's final branding (logo, official colors) is undecided; until then the working UI palette and animation plan in section 10 is used.
 
 ## 8. Still needed from you
@@ -301,6 +322,8 @@ Each step is delivered as files you commit to GitHub, then tested before the nex
 7. Who will be the first System Admin?
 8. Absence rule: decided as 5 absences per semester. Still to confirm: do excused and late marks stay uncounted (assumed)?
 9. Step 6 assumptions to confirm: (a) the 3-day edit window counts today and the two school days before it; (b) an excused absence must have a note; (c) a unit leader can register attendance only for a section they also teach; (d) a locked semester does not block attendance; (e) the homeroom teacher, not the subject teachers, normally takes the daily roll call, but a subject teacher of the section is also allowed.
+
+10. Step 7 assumptions to confirm: (a) the overall average is the plain mean of the subject yearly averages (every subject counts the same); (b) a student with a missing semester result in any subject is "incomplete" and is not suggested for promotion; (c) a Grade 12 student below the pass mark repeats Grade 12; (d) a saved promotion decision is final on the screen; (e) the card shows the homeroom teacher and director as blank signature lines, not names.
 
 ## 9. Working rules (how we deliver and test)
 
@@ -404,6 +427,7 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 - **Still to come, with the step that needs it:** highlight of a just-saved row, language cross-fade, dialogs and menus, the threshold pulse and animated counters on the roll call, marks grid feedback and counting totals, the left sidebar (the planned point after Step 6 has now been reached), stat tiles on the dashboard (as each step provides data).
 - **Done in Step 4:** the six-step registration form with progress bar and review, student cards on phones (the student list becomes cards), the section allocation board (drag and the "Move to" menu, live counts), and a step slide-in. Not yet done: a timeline beside the enrollment (the enrollment history is a table), counting animations on the board.
 - A future logo or official colors replace the palette by editing the tokens in 10.2; nothing else changes.
+- **The remaining UI work listed here is now planned in section 11 (UI v2).**
 
 ### 10.9 Design review and polish update (lead-designer pass)
 
@@ -432,4 +456,100 @@ Layouts use logical CSS properties (start and end instead of left and right) so 
 - A "skip to content" link and a print stylesheet for report cards (Step 7).
 
 **Files touched:** `src/styles.css` (new block at the end), `src/components/Shell.jsx` (footer), `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`. No database change.
+- **Done in Step 7:** printable report cards (one page each, screen controls hidden when printing), roster, subject sheets and the promotion table, styled with the existing tokens. Not yet done: a two-language card and a logo on the card (no logo yet, section 8, item 6).
 - **Done in Step 6:** the daily roll call, summary and absence-limit screens (section 4.7 "As built"), styled with the existing tokens. Not yet done: the pulse when a student reaches the limit and animated counters.
+
+## 11. UI v2 plan: user-friendly interface and animation
+
+Added after Step 7. The school owner has tested Steps 0 to 7 and asked for a plan that makes the website **user friendly**. This section replaces the open UI items of section 10 and sets the order of the work. It is a working design direction like section 10: **no database change**, no new library (static files, CSS-only motion), and the palette of 10.2 stays until the school decides on a logo and official colors (section 8, item 6).
+
+### 11.1 Goals
+1. **Fewer clicks for daily jobs:** roll call, marks entry, registering a student and year-end promotion are reachable from the first screen.
+2. **Always clear where you are and what happened:** navigation, breadcrumbs, and feedback after every save, error or deletion.
+3. **No fear of mistakes:** dialogs say exactly what will change; risky actions ask first; saved work is visibly saved.
+4. **Works on a phone and an old school computer**, in English and Amharic, with the same quality.
+5. **Calm motion:** it explains what changed and never delays a task (rules in 10.6 still apply: CSS only, `transform` and `opacity` only, 150 to 250 ms, nothing loops, "reduce motion" respected).
+
+### 11.2 Parts and order
+Each part is delivered as its own update (zip with only added and edited files, working rule 1) and is tested by the school owner before the next part starts.
+
+| Part | What | Result |
+|---|---|---|
+| A | Navigation and orientation | Easy to find things |
+| B | "My work" dashboard per role | Daily jobs in one click |
+| C | Feedback and safety | Clear, safe saving |
+| D | Animation | Feels responsive |
+| E | Phone and Amharic polish | Good on every device |
+| F | Branding and print polish | School identity (when the logo is decided) |
+
+### 11.3 Part A: navigation and orientation
+- **Left sidebar on desktop** (the plan of 10.4, now due: there are seven modules). It collapses to a menu button on phones and tablets. The active module and sub-tab are marked; the sub-tabs stay at the top of the page.
+- **Role-aware menu:** a person sees only the modules and tabs their role can use (for example a teacher does not see Staff or Promotion). This is only a screen convenience; the database rules stay the real protection.
+- **Breadcrumb line** under the title (for example Students > Student profile), and a **"skip to content"** link for keyboard users.
+- **Consistent page layout:** title, short one-line help text, toolbar (filters and the main action), content. The main action of a page is always in the same place and looks the same.
+- **Keyboard:** every menu, tab and dialog works with the keyboard; the focus outline stays visible.
+
+### 11.4 Part B: "my work" dashboard
+The dashboard shows what the signed-in person does most, by role. The module cards stay below.
+| Role | First-screen shortcuts |
+|---|---|
+| Teacher | My sections today; **Take today's roll call**; **Enter marks** for my subjects; my students at the absence limit |
+| Unit leader | Marks waiting to be finalized; students at the absence limit; my teachers' subjects |
+| Registrar | **Register a student**; students without a section; section allocation |
+| Director, vice director | Students at the absence limit; marks to finalize; **year-end promotion**; section summary |
+| System admin | All of the above, plus accounts without a role |
+- **Stat tiles** (students, staff, sections, today's attendance) as small figures, each a link to its list.
+- **Friendly empty states** on warm cream with one clear action ("No students yet. Register the first student"), as planned in 10.4.
+- **Recent items:** the last sections and subjects a person worked in, to reopen them in one click.
+- The shortcuts only read data that already exists; no new tables.
+
+### 11.5 Part C: feedback and safety
+- **Styled dialogs** replace the browser's plain `confirm` window (used today when finalizing marks, changing a mark structure and approving promotion). A dialog names the action, how many records are affected and what cannot be undone, with a clear cancel button and a primary button worded as the action ("Approve and save 42 decisions"). Focus moves into the dialog and returns afterwards; Escape cancels.
+- **Highlight of the row just saved or added** (gold fading to transparent), as already planned in 10.8.
+- **Inline field errors** beside the field, in the chosen language, saying what is wrong and how to fix it; the form keeps what was typed.
+- **Marks grid:** a small "Saved" mark in the cell or row after saving, and a visible warning when a save fails, so a teacher always knows whether a mark is stored.
+- **Unsaved changes:** leaving a half-filled form (registration, structure editor) asks first.
+- **Messages:** save, error and warning messages use one style and one place (top of the content); errors stay until dismissed.
+- **Undo** is offered only where it is safe and simple (for example a mistaken roll-call change before saving). Nothing is undone silently in the database.
+
+### 11.6 Part D: animation
+Same rules as 10.6. New and remaining motion, each with its purpose:
+| Where | Animation | Purpose |
+|---|---|---|
+| Dialogs and menus | Fade and scale from 96 to 100 percent | Soft change of focus |
+| Language switch | Quick cross-fade of the text (the page stays in place, so a half-filled form is never reset) | No flash of mixed text |
+| Roll call | Smooth color change between present, absent, late and excused; the absence counter nudges when it changes; one gentle pulse when a student reaches the limit | Fast, clear roll call |
+| Marks grid | A cell flashes terracotta above its maximum; totals count to the new value | Instant correction |
+| Section allocation board | The card glides to its new column; counts animate; a column that becomes unbalanced pulses once | Moves are understandable |
+| Registration form | The next step slides in from the reading direction; the progress bar fills | Clear progress |
+| Saved row | Gold highlight fading out | Shows what changed |
+| Loading | Skeletons shaped like the real table, card or form instead of generic bars | Calm waiting |
+| Sidebar | Smooth open and close on phones; the active marker slides to the new item | Shows where you are |
+- A single shared set of CSS motion tokens (duration, easing) is used everywhere, so the whole system moves the same way.
+- Nothing moves while a person is typing, and nothing delays a task. Everything is switched off by "reduce motion".
+
+### 11.7 Part E: phone and Amharic polish
+- **Tables become cards on phones** on every list that is still a wide table (staff, assignments, results, attendance summary), as the student list already does.
+- **Sticky action bar** (Save, Next) on long forms and the marks grid on phones, so the main button is never scrolled away.
+- **Touch targets** of at least 44 px everywhere, including the compact controls kept smaller on purpose (the allocation "Move to" menu and mark cells get a larger tap area without growing the layout).
+- **Amharic:** longer labels must wrap without breaking layouts; line height stays looser; every new text exists in both languages before release.
+- **Old computers:** no heavy effects; pages must stay smooth on slow hardware. A test pass on an old school computer and a low-cost phone is part of this part's acceptance.
+- **Accessibility checks** from 10.7 are repeated on every changed screen (contrast, focus, labels, color never the only signal).
+
+### 11.8 Part F: branding and print polish (when the school decides)
+- When the school gives a **logo and official colors**, only the design tokens (10.2) and the monogram placeholder change; no screen is redesigned.
+- **Report card:** logo in the header, a name line for the director and homeroom teacher, and optionally a **two-language card** (English and Amharic side by side). Until then the card keeps the plain header of Step 7.
+- A **print stylesheet** pass for the roster and sheets (repeat the table header on every page, avoid splitting a row).
+
+### 11.9 Acceptance for every part
+1. The app builds and `npm test` passes; no new test is removed.
+2. The changed screens are checked in English and Amharic, on a desktop and on a phone.
+3. Contrast, keyboard use and "reduce motion" are checked (10.7).
+4. The school owner tests the part with real staff roles before the next part starts, and problems are fixed in the next update.
+5. The blueprint and changelog are updated in the same zip (working rules 2 and 6).
+
+### 11.10 Still needed from you
+1. Do you want to start with **Parts A and B together** (the recommended first update)?
+2. Logo and official colors: still **undecided** (section 8, item 6). Until then the working palette is used.
+3. Which roles use the system most on **phones** (teachers for roll call and marks is assumed), so Part E tests those screens first.
+4. Is a **two-language report card** wanted, or is a card in the language of the page enough?

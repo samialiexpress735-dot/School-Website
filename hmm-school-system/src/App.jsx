@@ -19,6 +19,11 @@ import AttendanceLayout from "./pages/attendance/AttendanceLayout.jsx";
 import RollCallPage from "./pages/attendance/RollCallPage.jsx";
 import SummaryPage from "./pages/attendance/SummaryPage.jsx";
 import FlagsPage from "./pages/attendance/FlagsPage.jsx";
+import ReportsLayout from "./pages/reports/ReportsLayout.jsx";
+import RosterPage from "./pages/reports/RosterPage.jsx";
+import ReportCardPage from "./pages/reports/ReportCardPage.jsx";
+import SheetsPage from "./pages/reports/SheetsPage.jsx";
+import PromotionPage from "./pages/reports/PromotionPage.jsx";
 import StaffLayout from "./pages/staff/StaffLayout.jsx";
 import StaffListPage from "./pages/staff/StaffListPage.jsx";
 import StaffFormPage from "./pages/staff/StaffFormPage.jsx";
@@ -67,6 +72,12 @@ function LangRoutes() {
           <Route index element={<RollCallPage />} />
           <Route path="summary" element={<SummaryPage />} />
           <Route path="flags" element={<FlagsPage />} />
+        </Route>
+        <Route path="reports" element={<Protected><ReportsLayout /></Protected>}>
+          <Route index element={<RosterPage />} />
+          <Route path="cards" element={<ReportCardPage />} />
+          <Route path="sheets" element={<SheetsPage />} />
+          <Route path="promotion" element={<PromotionPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

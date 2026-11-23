@@ -10,7 +10,7 @@ const MODULES = [
   { key: "students", step: 4, to: "students" },
   { key: "marks", step: 5, to: "marks" },
   { key: "attendance", step: 6, to: "attendance" },
-  { key: "reports", step: 7 },
+  { key: "reports", step: 7, to: "reports" },
 ];
 
 // Today in both calendars, for the welcome banner. The standard date is shown in the page language.
