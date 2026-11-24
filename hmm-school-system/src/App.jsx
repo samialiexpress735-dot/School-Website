@@ -24,6 +24,8 @@ import RosterPage from "./pages/reports/RosterPage.jsx";
 import ReportCardPage from "./pages/reports/ReportCardPage.jsx";
 import SheetsPage from "./pages/reports/SheetsPage.jsx";
 import PromotionPage from "./pages/reports/PromotionPage.jsx";
+import ReportTemplatesPage from "./pages/reports/ReportTemplatesPage.jsx";
+import TemplateDesignerPage from "./pages/reports/TemplateDesignerPage.jsx";
 import StaffLayout from "./pages/staff/StaffLayout.jsx";
 import StaffListPage from "./pages/staff/StaffListPage.jsx";
 import StaffFormPage from "./pages/staff/StaffFormPage.jsx";
@@ -80,6 +82,8 @@ function LangRoutes() {
           <Route path="cards" element={<ReportCardPage />} />
           <Route path="sheets" element={<SheetsPage />} />
           <Route path="promotion" element={<PromotionPage />} />
+          <Route path="templates" element={<ReportTemplatesPage />} />
+          <Route path="templates/:id" element={<TemplateDesignerPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

@@ -2,6 +2,22 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 7A – the school's own report card forms
+- Added: `supabase/migrations/013_step7a_report_templates.sql`, `src/lib/reportTemplate.js`, `src/lib/formImages.js`, `src/pages/reports/ReportTemplatesPage.jsx`, `src/pages/reports/TemplateDesignerPage.jsx`, `src/pages/reports/FormSheet.jsx`, `src/pages/reports/FormCards.jsx`, `src/pages/reports/formData.js`, `tests/reportTemplate.test.js`, `tests/i18n.test.js`
+- Edited: `package.json` and `package-lock.json` (new library `pdfjs-dist`, loaded only when a PDF is chosen), `src/App.jsx`, `src/lib/nav.js`, `src/pages/reports/ReportsLayout.jsx`, `src/pages/reports/ReportCardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run: `npm install` (once, for the new library). **Run SQL: `013_step7a_report_templates.sql`** in the Supabase SQL editor, once, after 001 to 012. It creates the two template tables with their security rules, the function that saves a version, and the private storage bucket `report-forms`.
+- What changed:
+  - **Reports > School forms** (administration only): list of forms, "New form", and a designer per form.
+  - **Designer:** upload a PDF or scan, place subject rows (first and last line, the rest spread evenly), columns and single fields, move them by dragging or with the arrow keys, set the printer adjustment, see warnings about subjects without a row, preview with a real student, print a test page, save as a new version.
+  - **Reports > Report cards:** prints on the school's form when the grade has one ("Print on" lets you choose the plain card); a missing mark leaves the box blank, never a zero.
+  - **Security:** only the system admin, director and vice director create forms and versions; every role with a login can read them; versions and page images can never be changed or deleted; the bucket is private.
+  - A test now checks that every English text has an Amharic text and the same {placeholders} (all existing texts already did).
+- After this update: log in as an administrator, open Reports > School forms, create a form for your grades, choose your blank report card (PDF or scan), click the first and last subject line, add the Semester 1, Semester 2 and Average columns, add the name, ID and rank fields, preview with a student, print a test page and hold it against the blank form, adjust, and save. Then open Reports > Report cards for a section of that grade and print. Check it on the real paper. Also check as a teacher that the School forms tab is not shown.
+- Tested: `npm test` passes (69 tests, 14 new). The app builds. On PostgreSQL with stand-ins for the Supabase parts, 29 database checks passed (who may create and save, bad layouts refused, versions and images cannot be edited or deleted, audit log). In a browser simulation with a fake database, the designer workflow (25 checks) and printing two students on a two-page form (9 checks) passed. **Not** tested: a real PDF or scan, a real browser, a real printer, the real Supabase storage, Amharic text on paper.
+- Known limits: the printed batch does not list students affected by a subject without a row; only yearly forms are used when printing; no "shift" field; the designer is for a computer.
+- Next: send the school's real blank report card (PDF or scan, front and back) so the designer can be tried on it, and answer section 8, item 11 (extra boxes, which grades share a form, paper size, conduct and remarks).
+
 ## UI v2, Part E – phone and Amharic polish
 - Added: `tests/stackTables.test.js`
 - Edited: `src/pages/staff/StaffListPage.jsx`, `src/pages/staff/AssignmentsPage.jsx`, `src/pages/staff/StaffFormPage.jsx`, `src/pages/marks/ResultsPage.jsx`, `src/pages/marks/EntryPage.jsx`, `src/pages/marks/StructureEditor.jsx`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

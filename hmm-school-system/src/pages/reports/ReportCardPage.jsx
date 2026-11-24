@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, LoadError, Loading, pick, fullName } from "../../lib/ui.jsx";
 import { fmt } from "../../lib/marksData.js";
@@ -7,6 +7,9 @@ import { formatEc } from "../../lib/ethiopian.js";
 import { isPass } from "../../lib/marksEngine.js";
 import { sectionLabel, useMarksRef, useYearSemester } from "../marks/MarksParts.jsx";
 import { useSectionScope, YearSectionPicker } from "./ReportsParts.jsx";
+import { pickTemplate } from "../../lib/reportTemplate.js";
+import { loadTemplates } from "./formData.js";
+import FormCards from "./FormCards.jsx";
 
 const ALL = "__all__";
 
@@ -44,10 +47,18 @@ function Cards({ refData, ys, scope }) {
   const { t, lang } = useLang();
   const { section, gradeSubjects } = scope;
   const [who, setWho] = useState(ALL);
+  const [mode, setMode] = useState(null);           // null = the default (the school's form when there is one)
+  const [formFailed, setFormFailed] = useState(false);
+  const [printForm, setPrintForm] = useState(null); // set by FormCards once its page images can be printed
+  const onReady = useCallback((fn) => setPrintForm(() => fn), []);
+  const tplQ = useQuery(() => loadTemplates(), []);
   const q = useQuery(() => loadReport({ refData, gradeSubjects, yearId: ys.yearId, gradeId: section.grade_id, sectionId: section.id }), [ys.yearId, section.id]);
   const group = q.data?.groups[0];
   const rows = group ? [...group.report.rows].sort((a, b) => fullName(a.enrollment.students, "en").localeCompare(fullName(b.enrollment.students, "en"))) : [];
   const shown = who === ALL ? rows : rows.filter((r) => r.enrollment.id === who);
+  const tpl = group ? pickTemplate(tplQ.data, { gradeId: section.grade_id, streamId: group.streamId, kind: "yearly" }) : null;
+  const useSchool = Boolean(tpl) && !formFailed && (mode ?? "school") === "school";
+  const printNow = () => (useSchool ? printForm?.() : window.print());
   const picker = (
     <>
       <label>
@@ -57,13 +68,27 @@ function Cards({ refData, ys, scope }) {
           {rows.map((r) => (<option key={r.enrollment.id} value={r.enrollment.id}>{fullName(r.enrollment.students, lang)}</option>))}
         </select>
       </label>
-      <button type="button" onClick={() => window.print()} disabled={shown.length === 0}>{t("reports.print")}</button>
+      {tpl && !formFailed && (
+        <label>
+          <span className="small muted">{t("reports.formUse.label")}</span>
+          <select value={useSchool ? "school" : "plain"} onChange={(e) => setMode(e.target.value)}>
+            <option value="school">{t("reports.formUse.school")}</option>
+            <option value="plain">{t("reports.formUse.plain")}</option>
+          </select>
+        </label>
+      )}
+      <button type="button" onClick={printNow} disabled={shown.length === 0 || (useSchool && !printForm)}>{t("reports.print")}</button>
     </>
   );
   return (
     <>
       <YearSectionPicker refData={refData} ys={ys} scope={scope} extra={picker} />
-      {q.loading ? <Loading /> : q.error ? <LoadError /> : shown.length === 0 ? <p className="empty">{t("marks.results.noStudents")}</p> : (
+      {formFailed && <p className="flash error no-print" role="alert"><span>{t("reports.formUse.loadFailed")}</span></p>}
+      {!tpl && (tplQ.data?.length ?? 0) > 0 && <p className="small muted no-print">{t("reports.formUse.none")}</p>}
+      {useSchool && <p className="small muted no-print">{t("reports.formUse.note")}</p>}
+      {q.loading ? <Loading /> : q.error ? <LoadError /> : shown.length === 0 ? <p className="empty">{t("marks.results.noStudents")}</p> : useSchool ? (
+        <FormCards template={tpl} rows={shown} refData={refData} year={refData.years.find((y) => y.id === ys.yearId)} section={section} onReady={onReady} onFailed={() => setFormFailed(true)} />
+      ) : (
         shown.map((r) => (
           <ReportCard key={r.enrollment.id} refData={refData} year={refData.years.find((y) => y.id === ys.yearId)} section={section} sems={q.data.sems} subjects={group.subjects} row={r} total={rows.length} />
         ))

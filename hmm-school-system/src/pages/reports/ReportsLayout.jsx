@@ -14,6 +14,7 @@ export default function ReportsLayout() {
         <NavLink to={`/${lang}/reports/cards`}>{t("reports.tabs.cards")}</NavLink>
         <NavLink to={`/${lang}/reports/sheets`}>{t("reports.tabs.sheets")}</NavLink>
         {can(profile, PROMOTION_DECIDERS) && <NavLink to={`/${lang}/reports/promotion`}>{t("reports.tabs.promotion")}</NavLink>}
+        {can(profile, PROMOTION_DECIDERS) && <NavLink to={`/${lang}/reports/templates`}>{t("reports.tabs.templates")}</NavLink>}
       </nav>
       <Outlet />
     </>

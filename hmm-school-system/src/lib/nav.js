@@ -24,7 +24,7 @@ const KNOWN_TABS = {
   students: ["import", "allocation"],
   marks: ["results", "structures"],
   attendance: ["summary", "flags"],
-  reports: ["cards", "sheets", "promotion"],
+  reports: ["cards", "sheets", "promotion", "templates"],
 };
 
 // "/en/students/new" -> { module: "students", tab: "register" }. Returns null on the dashboard and unknown pages.

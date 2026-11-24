@@ -646,3 +646,54 @@ input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--te
 html[lang="am"] .btn, html[lang="am"] .btn-small, html[lang="am"] .seg-btn, html[lang="am"] .tabs a, html[lang="am"] .pill { line-height: 1.5; }
 html[lang="am"] th, html[lang="am"] td { line-height: 1.7; }
 @media (max-width: 640px) { html[lang="am"] .seg-btn { font-size: 0.82rem; padding-inline: 0.1rem; } }
+
+/* ==========================================================================
+   Step 7A: the school's own report card forms (list, designer, printing)
+   ========================================================================== */
+.tpl-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+.tpl-list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+.tpl-list li.tpl-off { opacity: 0.65; }
+.file-btn { display: inline-flex; cursor: pointer; }
+.file-btn:focus-within { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* One page of a form: the blank form as background, the values placed on top (positions are % of the page) */
+.form-sheet { position: relative; width: 100%; max-width: 100%; background: #fff; container-type: inline-size; overflow: hidden; }
+.form-inner { position: absolute; inset: 0; }
+.form-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; user-select: none; pointer-events: none; }
+.form-val { position: absolute; display: flex; align-items: center; overflow: hidden; white-space: nowrap; line-height: 1; color: #000; font-family: inherit; font-size: calc(var(--s, 11) * 1pt); }
+@supports (width: 1cqw) { .form-val { font-size: calc(var(--s, 11) * 0.168cqw); } } /* 1 pt on a 210 mm page, at any screen size */
+.form-cards { display: grid; gap: 1rem; justify-items: center; }
+.form-cards .form-sheet { max-width: 46rem; border: 1px solid var(--line); box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,0,0,.1)); }
+.print-only { display: none; }
+
+/* The designer */
+.designer-grid { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; gap: 1.25rem; align-items: start; margin-top: 0.75rem; }
+.designer-stage { position: relative; border: 1px solid var(--line); background: #e9edf1; outline-offset: 2px; max-width: 46rem; margin-inline: auto; }
+.designer-stage .form-sheet.on-screen { max-width: none; border: 0; }
+.stage-hit { position: absolute; inset: 0; cursor: crosshair; }
+.designer-stage:not(.tool-place) .stage-hit { cursor: default; }
+.stage-item { position: absolute; box-sizing: border-box; border: 1px solid; touch-action: none; cursor: move; }
+.stage-item.row { border-color: rgba(15, 46, 77, 0.8); background: rgba(15, 46, 77, 0.12); }
+.stage-item.col { border-color: rgba(176, 124, 16, 0.9); background: rgba(240, 180, 41, 0.18); }
+.stage-item.fld { border-color: rgba(184, 67, 47, 0.9); background: rgba(184, 67, 47, 0.14); }
+.stage-item.sel { border-width: 2px; box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--ink); z-index: 3; }
+.stage-item.faint { background: transparent; }
+.stage-item .tag { position: absolute; left: 2px; top: 1px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.62rem; line-height: 1.1; color: var(--ink); background: rgba(255, 255, 255, 0.85); padding: 0 2px; pointer-events: none; }
+.stage-item.col .tag { top: 2px; writing-mode: horizontal-tb; }
+.tool-place .stage-item { pointer-events: none; }
+.designer-panel { display: grid; gap: 0.75rem; position: sticky; top: 1rem; }
+.panel-box { display: grid; gap: 0.5rem; padding: 0.8rem; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+.panel-box label { display: grid; gap: 0.2rem; }
+.item-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; max-height: 14rem; overflow-y: auto; }
+.item-list button { width: 100%; text-align: start; background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+.item-list button.on { border-color: var(--ink); background: var(--cream); font-weight: 700; }
+.designer .row-actions { align-items: center; }
+@media (max-width: 900px) { .designer-grid { grid-template-columns: 1fr; } .designer-panel { position: static; } }
+
+@media print {
+  .print-only { display: block; }
+  .form-sheet { width: 210mm; height: 297mm; max-width: none; aspect-ratio: auto !important; border: 0 !important; box-shadow: none !important; break-after: page; page-break-after: always; }
+  .form-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .form-val { font-size: calc(var(--s, 11) * 1pt) !important; }
+  .form-cards { display: block; }
+}
