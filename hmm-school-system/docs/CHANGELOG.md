@@ -2,6 +2,19 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 7A, fourth update – a faster form designer (workspace, column types, delete and undo)
+- Edited: `src/pages/reports/TemplateDesignerPage.jsx`, `src/styles.css`, `src/i18n/en.js`, `src/i18n/am.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Added: nothing. Delete: nothing.
+- Run SQL: none. No database change, no new library, no change to the saved layout.
+- What changed:
+  - **One workspace.** A top bar that stays in view (tools, page switch, Undo, Redo, test print, replace form, Save). The year, grade, stream, section and student are now at the top instead of below the form. The subjects and student-information list is on the left, the settings of the selected item, the warnings and the list of placed items on the right; both stay in view while scrolling. The form can be zoomed.
+  - **Column type before drawing.** One Column tool with a list of types (Semester 1, Semester 2, Yearly average, Pass/Fail) instead of a type chosen after drawing. The rectangle and the finished column show the type by colour and a short label. After a column the next missing type is ready, so the four can be drawn one after another.
+  - **Delete and undo.** A ✕ on the selected item, a Delete button at the top of the right panel, the Delete key, a ✕ on every placed subject, field and list entry, and Undo / Redo (buttons, Ctrl+Z, Ctrl+Y) for the unsaved layout. Keys V, T, C choose the tools; Esc stops; arrow keys move the selected item.
+  - Section 10 rules applied to the new layout: palette tokens, 44 px controls (the round ✕ on the form is 28 px; the Delete button and key are the 44 px ways), logical properties, no new animation, Amharic line height. New texts exist in English and Amharic.
+- After this update: open Reports > School forms, open a form that has its blank form chosen. Pick "Semester 1" in the list next to Column and draw it, then draw the next three; click a subject in the left list and then its ✕; press Delete on a selected box; press Ctrl+Z; choose a section and a student at the top and check the values; save.
+- Tested: the app builds and `npm test` passes (80 tests, none added or removed). **Not** tested in a real browser, with a real mouse, in Amharic, on a real form or printer; the earlier browser-simulation checks of the designer are not in the project and were not repeated. Contrast and sizes were set in the style sheet, not measured.
+- Next: please try the designer on the school's real blank form in English and Amharic. Decisions for you: (a) is the Amharic wording right? (b) should the Column tool stay on after each column (it does now), or return to Select every time?
+
 ## Step 7A, third update – the school's form prints only finalized subjects
 - Edited: `src/lib/reportTemplate.js`, `src/pages/reports/formData.js`, `src/pages/reports/FormCards.jsx`, `src/pages/reports/TemplateDesignerPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/reportTemplate.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
 - Added: nothing. Delete: nothing.

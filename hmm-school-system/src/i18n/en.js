@@ -496,10 +496,16 @@ export default {
       layoutTitle: "2. Mark where the values go",
       gradeFor: "Show the subjects of", year: "Academic year", grade: "Grade", stream: "Stream",
       tools: { select: "Select and move", table: "Draw the subjects table", column: "Draw a column", field: "Add a field" },
+      toolsShort: { select: "Select", table: "Table", column: "Column" },
+      columnType: "Column type", columnShort: { sem1: "S1", sem2: "S2", average: "Avg", result: "P/F" },
+      undo: "Undo", redo: "Redo", removeShort: "Delete", zoom: "Zoom", zoomIn: "Zoom in", zoomOut: "Zoom out", zoomFit: "Reset zoom",
+      placedCount: "{n} of {total} placed", checksOk: "Everything looks right.",
+      inspectorEmpty: "Select an item on the form to edit it here.",
+      shortcuts: "Keys: V select, T table, C column, Delete remove, arrows move, Ctrl+Z undo, Esc stop.",
       hints: {
         select: "Click an item to select it. Drag it, or move it with the arrow keys (Shift = bigger steps).",
         rows1: "Click on the line of the FIRST subject.", rows2: "Now click on the line of the LAST subject. The other subjects are spread evenly between them.",
-        column: "Drag a rectangle over the column, like in Paint. A plain click gives a normal size.", table: "Drag one rectangle over the lines of the subjects table. The subjects that have no row yet are divided evenly inside it, one row each.", field: "Click where the value should start.",
+        column: "Drawing: {kind}. Drag a rectangle over that column on the form (a plain click gives a normal size). The next type is ready afterwards. Press Esc when you are done.", table: "Drag one rectangle over the lines of the subjects table. The subjects that have no row yet are divided evenly inside it, one row each.", field: "Click where the value should start.",
       },
       rowsNeedSubjects: "This grade has no subjects in the chosen year.",
       palette: {
