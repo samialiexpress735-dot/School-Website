@@ -121,7 +121,10 @@ function Designer({ template, initial, refData }) {
     for (const f of layout.fields) out.push({ id: f.id, page: f.page ?? 0, x: f.x, y: f.y, w: f.w, h: 3, text: t(`reports.designer.fieldKeys.${f.key}`), align: f.align ?? "start", size: f.size ?? 11 });
     return out;
   }, [layout, t]);
-  const shownItems = realItems ?? [];
+  // Use real student values when a student is selected; otherwise use sample values
+  // so the test print still renders correctly for a blank preview.
+  const printItems = realItems ?? sampleItems;
+  const shownItems = printItems;
 
   // ----- undo / redo: the layout is kept before each change (a drag counts as one change, typing in one box as one) -----
   const layoutRef = useRef(layout);
