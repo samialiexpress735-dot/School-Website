@@ -73,8 +73,7 @@ export default {
     open: "Open",
     tilesTitle: "At a glance",
     todoTitle: "What would you like to do?",
-    recentTitle: "Recently opened",
-    tiles: { students: "Students", myStudents: "My students", sections: "Sections", mySections: "My sections", staff: "Active staff", absentToday: "Absent today", noRole: "Accounts without a role" },
+    tiles: { students: "Students", myStudents: "My students", sections: "Sections", mySections: "My sections", staff: "Active staff", absentToday: "Absent today" },
     shortcuts: {
       rollCall: { name: "Take today's roll call", desc: "Mark who is absent, late or excused" },
       enterMarks: { name: "Enter marks", desc: "Open the marks grid for your subjects" },

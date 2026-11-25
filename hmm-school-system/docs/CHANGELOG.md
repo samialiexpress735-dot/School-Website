@@ -2,6 +2,22 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Mobile update 1 – one-letter language button, simpler dashboard, phone-friendly semester and department editing
+- Added: nothing.
+- Edited: `src/components/LangSwitch.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/pages/structure/YearsPage.jsx`, `src/pages/staff/DepartmentsPage.jsx`, `src/lib/dashboard.js`, `src/lib/dashboardData.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `tests/dashboard.test.js`, `tests/nav.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: `src/lib/recent.js` (uploading cannot remove files: delete it by hand in GitHub or your folder)
+- Run SQL: none. No database change, no new library.
+- What changed (phone views; desktop layouts are not changed, except the two removals):
+  - **Language button.** On phones (640 px or less) the "English | አማርኛ" pill is one round 44 px button showing **E** (page is English) or **A** (page is Amharic). Press it to switch; the letter changes. Top bar and login page. Wide screens keep the pill.
+  - **Dashboard.** The "Accounts without a role" tile (system admin) is removed from *At a glance*, and the **Recently opened** block is removed, together with the code that remembered pages (`recent.js`) and the dashboard query for accounts without a role. Removed on every screen size. The two unused texts are removed from the English and Amharic files.
+  - **Academic years.** On a phone each semester is a card: Start and End dates under their own labels (side by side above 420 px), then Save and Lock at full width. No sideways scrolling.
+  - **Staff > Departments.** Each department is a card with Name, Amharic name and Leader stacked at full width, then Save. No sideways scrolling.
+  - Section 11.11 of the blueprint describes all of this; 11.4 and 11.7 were corrected where they mentioned the removed items.
+- After this update: (1) open the system on a phone: top right shows a round E; tap it, the page turns Amharic and the button shows A; tap again, back to English. (2) Sign in as the system admin: *At a glance* has no "Accounts without a role" and the dashboard has no "Recently opened". (3) Structure > Academic years: each semester is a card with both dates visible without scrolling sideways; change a date and press Save. (4) Staff > Departments: each department is a card; edit a name, choose a leader, Save. (5) Repeat in Amharic. (6) On a computer, both tables look as before.
+- Tested: the app builds (staff and public) and `npm test` passes (**86 tests**: the 2 tests of the deleted recent-pages code were removed with it, none other; the English and Amharic texts match; the card-table label test covers the two new card tables). **Not** tested in a real browser or on a phone, in either language.
+- Notes: the browser may still hold old, unused entries named `hmm.recent.<id>` from the earlier feature; they do nothing and go away when site data is cleared. The public website was not changed (it already has its own single language link).
+- Decisions for you: (a) the button shows the *current* language; if you want it to show the language it switches *to*, say so. (b) The two dashboard removals apply on every screen size. (c) Other tables you would like turned into phone cards (for example calendar entries, subjects, sections)?
+
 ## Update 015 – delete staff and school forms; a renamed person's name reaches their dashboard
 - Added: `supabase/migrations/015_delete_and_name_sync.sql`
 - Edited: `src/lib/AuthContext.jsx`, `src/lib/formImages.js`, `src/pages/staff/StaffFormPage.jsx`, `src/pages/reports/ReportTemplatesPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

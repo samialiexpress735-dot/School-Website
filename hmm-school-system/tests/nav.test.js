@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { visibleModules, breadcrumbParts, crumbKeys } from "../src/lib/nav.js";
-import { addRecent, isRecentEntry } from "../src/lib/recent.js";
 
 const keys = (role) => visibleModules(role).map((m) => m.key);
 
@@ -34,19 +33,4 @@ test("crumb keys", () => {
   assert.deepEqual(crumbKeys({ module: "students", tab: "register" }), { module: "nav.students", tab: "students.tabs.register" });
   assert.deepEqual(crumbKeys({ module: "students", tab: "details" }), { module: "nav.students", tab: "nav.details" });
   assert.deepEqual(crumbKeys({ module: "staff", tab: "new" }), { module: "nav.staff", tab: "nav.new" });
-});
-
-test("recent pages: newest first, no repeats, limited", () => {
-  let l = [];
-  for (const p of ["marks", "marks/results", "attendance", "reports", "students", "staff"]) l = addRecent(l, { path: p, module: p.split("/")[0], tab: null });
-  assert.deepEqual(l.map((x) => x.path), ["staff", "students", "reports", "attendance", "marks/results"]);
-  l = addRecent(l, { path: "reports", module: "reports", tab: null });
-  assert.deepEqual(l.map((x) => x.path), ["reports", "staff", "students", "attendance", "marks/results"]);
-});
-
-test("only plain page addresses are accepted as recent entries", () => {
-  assert.equal(isRecentEntry({ path: "marks/results", module: "marks" }), true);
-  assert.equal(isRecentEntry({ path: "students/3f2a-9b1c-uuid", module: "students" }), false); // never keep ids
-  assert.equal(isRecentEntry({ path: "<script>", module: "x" }), false);
-  assert.equal(isRecentEntry(null), false);
 });

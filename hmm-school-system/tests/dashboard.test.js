@@ -23,10 +23,10 @@ test("role shortcuts match the plan", () => {
 });
 
 test("tiles: a teacher sees own figures; missing figures are left out; only the admin sees accounts without a role", () => {
-  const s = { students: 400, sections: 12, mySections: 3, staff: 40, absentToday: 7, noRole: 2 };
+  const s = { students: 400, sections: 12, mySections: 3, staff: 40, absentToday: 7 };
   assert.deepEqual(tilesFor("teacher", s).map((t) => t.key), ["myStudents", "mySections", "absentToday"]);
   assert.deepEqual(tilesFor("registrar", s).map((t) => t.key), ["students", "sections", "staff", "absentToday"]);
-  assert.deepEqual(tilesFor("system_admin", s).map((t) => t.key), ["students", "sections", "staff", "absentToday", "noRole"]);
+  assert.deepEqual(tilesFor("system_admin", s).map((t) => t.key), ["students", "sections", "staff", "absentToday"]);
   assert.deepEqual(tilesFor("director", { students: 0, sections: null, staff: null, absentToday: 0 }).map((t) => t.key), ["students", "absentToday"]);
 });
 

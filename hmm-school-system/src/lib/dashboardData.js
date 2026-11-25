@@ -16,7 +16,7 @@ export async function loadDashboardStats(profile) {
   const y = await supabase.from("academic_years").select("id,label").eq("is_current", true).maybeSingle();
   if (y.error) return { data: null, error: y.error };
   const year = y.data;
-  const stats = { year, students: null, sections: null, mySections: null, staff: null, absentToday: null, noRole: null };
+  const stats = { year, students: null, sections: null, mySections: null, staff: null, absentToday: null };
   if (!year) return { data: stats, error: null };
 
   const role = profile?.role;
@@ -43,7 +43,6 @@ export async function loadDashboardStats(profile) {
       jobs.push(count(head("staff").eq("employment_status", "active")).then((n) => (stats.staff = n)));
     }
   }
-  if (role === "system_admin") jobs.push(count(head("profiles").is("role", null)).then((n) => (stats.noRole = n)));
   await Promise.all(jobs);
   return { data: stats, error: null };
 }

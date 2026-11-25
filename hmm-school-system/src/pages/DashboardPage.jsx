@@ -1,13 +1,11 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useLang } from "../i18n/index.jsx";
 import { useQuery } from "../lib/ui.jsx";
 import { formatEc } from "../lib/ethiopian.js";
-import { visibleModules, breadcrumbParts, crumbKeys } from "../lib/nav.js";
+import { visibleModules } from "../lib/nav.js";
 import { emptyStateFor, shortcutsFor, tilesFor } from "../lib/dashboard.js";
 import { loadDashboardStats } from "../lib/dashboardData.js";
-import { loadRecent } from "../lib/recent.js";
 import NavIcon from "../components/NavIcon.jsx";
 
 // Today in both calendars, for the welcome banner. The standard date is shown in the page language.
@@ -36,25 +34,6 @@ export default function DashboardPage() {
   const tiles = stats ? tilesFor(profile.role, stats) : [];
   const shortcuts = shortcutsFor(profile.role);
   const modules = visibleModules(profile.role).filter((m) => m.key !== "dashboard");
-
-  // Last pages opened in this browser, shown as "Students > Register student".
-  const recent = useMemo(() => {
-    return loadRecent(profile.id)
-      .map((e) => {
-        const parts = breadcrumbParts(`/x/${e.path}`);
-        if (!parts || !modules.some((m) => m.key === parts.module)) return null;
-        return { path: e.path, parts };
-      })
-      .filter(Boolean)
-      .slice(0, 4);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.id, profile.role]);
-  const crumbText = (parts) => {
-    const k = crumbKeys(parts);
-    const m = t(k.module);
-    const tab = k.tab ? t(k.tab) : null;
-    return tab && tab !== m ? `${m} › ${tab}` : m;
-  };
 
   return (
     <>
@@ -107,17 +86,6 @@ export default function DashboardPage() {
                   </span>
                 </Link>
               </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      {recent.length > 0 && (
-        <>
-          <h2 className="section-title">{t("dashboard.recentTitle")}</h2>
-          <ul className="recent">
-            {recent.map((r) => (
-              <li key={r.path}><Link to={`/${lang}/${r.path}`}>{crumbText(r.parts)}</Link></li>
             ))}
           </ul>
         </>

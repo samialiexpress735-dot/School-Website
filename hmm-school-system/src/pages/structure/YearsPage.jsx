@@ -24,18 +24,18 @@ function SemesterRow({ sem, editable, onDone, notice }) {
 
   return (
     <tr>
-      <th scope="row">
+      <th scope="row" className="stack-title">
         {t("years.semester", { n: sem.number })} {sem.is_locked && <span className="pill">{t("common.locked")}</span>}
       </th>
-      <td>
+      <td data-label={t("common.start")}>
         <input type="date" aria-label={t("common.start")} value={start} onChange={(e) => setStart(e.target.value)} disabled={!editable} />
         <EcDate value={start} />
       </td>
-      <td>
+      <td data-label={t("common.end")}>
         <input type="date" aria-label={t("common.end")} value={end} onChange={(e) => setEnd(e.target.value)} disabled={!editable} />
         <EcDate value={end} />
       </td>
-      <td className="row-actions">
+      <td className="row-actions" data-label="">
         {editable && (
           <>
             <button type="button" className="btn-small" onClick={save}>{t("common.save")}</button>
@@ -149,8 +149,8 @@ export default function YearsPage() {
               </div>
             )}
           </div>
-          <div className="tablewrap">
-            <table>
+          <div className="tablewrap edit-cards edit-cards-pair">
+            <table className="stack">
               <thead>
                 <tr><th></th><th>{t("common.start")}</th><th>{t("common.end")}</th><th><span className="sr-only">{t("common.actions")}</span></th></tr>
               </thead>

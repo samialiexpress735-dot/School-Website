@@ -73,8 +73,7 @@ export default {
     open: "ክፈት",
     tilesTitle: "በአጭሩ",
     todoTitle: "ምን ማድረግ ይፈልጋሉ?",
-    recentTitle: "በቅርቡ የተከፈቱ",
-    tiles: { students: "ተማሪዎች", myStudents: "የእኔ ተማሪዎች", sections: "ሴክሽኖች", mySections: "የእኔ ሴክሽኖች", staff: "ንቁ ሠራተኞች", absentToday: "ዛሬ የቀሩ", noRole: "ሚና የሌላቸው አካውንቶች" },
+    tiles: { students: "ተማሪዎች", myStudents: "የእኔ ተማሪዎች", sections: "ሴክሽኖች", mySections: "የእኔ ሴክሽኖች", staff: "ንቁ ሠራተኞች", absentToday: "ዛሬ የቀሩ" },
     shortcuts: {
       rollCall: { name: "የዛሬን ዕለታዊ ጥሪ ያድርጉ", desc: "ያልመጡ፣ የዘገዩና ፈቃድ ያላቸውን ምልክት ያድርጉ" },
       enterMarks: { name: "ውጤት ይመዝግቡ", desc: "ለሚያስተምሩት ትምህርት የውጤት ሠንጠረዥ ይክፈቱ" },

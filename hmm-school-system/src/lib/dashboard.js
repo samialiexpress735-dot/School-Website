@@ -38,7 +38,6 @@ export function tilesFor(role, s = {}) {
       : { key: "sections", value: s.sections, to: "structure/sections" },
     teacher ? null : { key: "staff", value: s.staff, to: "staff" }, // teachers cannot open the staff list
     { key: "absentToday", value: s.absentToday, to: "attendance/summary" },
-    role === "system_admin" ? { key: "noRole", value: s.noRole, to: "staff" } : null,
   ];
   return tiles.filter((x) => x && Number.isFinite(x.value));
 }

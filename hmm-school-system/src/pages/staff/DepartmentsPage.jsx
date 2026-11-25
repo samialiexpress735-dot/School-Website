@@ -18,15 +18,15 @@ function DepartmentRow({ dept, staff, editable, notice, onDone, flash }) {
   }
   return (
     <tr className={flash}>
-      <td><input aria-label={t("common.name")} value={name} onChange={(e) => setName(e.target.value)} disabled={!editable} /></td>
-      <td><input aria-label={t("common.nameAm")} value={nameAm} onChange={(e) => setNameAm(e.target.value)} disabled={!editable} lang="am" /></td>
-      <td>
+      <td data-label={t("common.name")}><input aria-label={t("common.name")} value={name} onChange={(e) => setName(e.target.value)} disabled={!editable} /></td>
+      <td data-label={t("common.nameAm")}><input aria-label={t("common.nameAm")} value={nameAm} onChange={(e) => setNameAm(e.target.value)} disabled={!editable} lang="am" /></td>
+      <td data-label={t("departments.leader")}>
         <select aria-label={t("departments.leader")} value={leader} onChange={(e) => setLeader(e.target.value)} disabled={!editable}>
           <option value="">{t("departments.noLeader")}</option>
           {staff.map((s) => <option key={s.id} value={s.id}>{fullName(s, lang)}</option>)}
         </select>
       </td>
-      <td className="row-actions">{editable && <button type="button" className="btn-small" onClick={save}>{t("common.save")}</button>}</td>
+      <td className="row-actions" data-label="">{editable && <button type="button" className="btn-small" onClick={save}>{t("common.save")}</button>}</td>
     </tr>
   );
 }
@@ -73,8 +73,8 @@ export default function DepartmentsPage() {
           <div className="formgrid-action"><button type="submit" className="btn-small">{t("common.add")}</button></div>
         </form>
       )}
-      <div className="tablewrap">
-        <table>
+      <div className="tablewrap edit-cards">
+        <table className="stack">
           <thead><tr><th>{t("common.name")}</th><th>{t("common.nameAm")}</th><th>{t("departments.leader")}</th><th><span className="sr-only">{t("common.actions")}</span></th></tr></thead>
           <tbody>
             {data.departments.map((d) => (

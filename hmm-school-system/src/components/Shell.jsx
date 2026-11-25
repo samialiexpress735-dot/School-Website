@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useLang } from "../i18n/index.jsx";
-import { visibleModules, breadcrumbParts } from "../lib/nav.js";
-import { addRecent, isRecentEntry, loadRecent, saveRecent } from "../lib/recent.js";
+import { visibleModules } from "../lib/nav.js";
 import { DURATION, reducedMotion } from "../lib/motion.js";
 import LangSwitch from "./LangSwitch.jsx";
 import NavIcon from "./NavIcon.jsx";
@@ -49,16 +48,6 @@ export default function Shell({ children, showNav }) {
     sidebar.current?.querySelector("a")?.focus();
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
-
-  // Remember the last pages opened (page addresses only, kept in this browser) for the dashboard.
-  useEffect(() => {
-    if (!showNav || !profile?.id) return;
-    const parts = breadcrumbParts(pathname);
-    if (!parts || parts.tab === "details") return;
-    const path = pathname.split("/").slice(2).filter(Boolean).join("/");
-    const entry = { path, module: parts.module, tab: parts.tab };
-    if (isRecentEntry(entry)) saveRecent(profile.id, addRecent(loadRecent(profile.id), entry));
-  }, [pathname, showNav, profile?.id]);
 
   const modules = showNav ? visibleModules(profile?.role) : [];
   return (
