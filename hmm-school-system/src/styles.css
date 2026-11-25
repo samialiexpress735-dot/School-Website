@@ -697,3 +697,17 @@ html[lang="am"] th, html[lang="am"] td { line-height: 1.7; }
   .form-val { font-size: calc(var(--s, 11) * 1pt) !important; }
   .form-cards { display: block; }
 }
+
+/* Designer: drag the edge of an item to change its width (columns, fields) or height (rows) */
+.stage-item .handle { position: absolute; background: var(--ink); opacity: 0; touch-action: none; }
+.stage-item:hover .handle, .stage-item.sel .handle { opacity: 0.7; }
+.stage-item .handle.h-right { right: -4px; top: 0; bottom: 0; width: 8px; cursor: ew-resize; }
+.stage-item .handle.h-bottom { left: 0; right: 0; bottom: -4px; height: 8px; cursor: ns-resize; }
+.item-list.palette { max-height: 11rem; }
+.item-list.palette button { display: flex; gap: 0.25rem; align-items: baseline; }
+
+/* The rectangle being drawn (like the rectangle tool in Paint) and the corner that resizes an item */
+.stage-draft { position: absolute; box-sizing: border-box; border: 2px dashed var(--ink); background: rgba(15, 46, 77, 0.14); pointer-events: none; z-index: 4; }
+.stage-item .handle.h-corner { right: -5px; bottom: -5px; width: 10px; height: 10px; cursor: nwse-resize; border-radius: 2px; border: 1px solid #fff; }
+.stage-item .handle.h-right, .stage-item .handle.h-bottom { display: none; }
+.designer-stage.tool-place .stage-hit, .designer-stage.tool-place .stage-draft { cursor: crosshair; }

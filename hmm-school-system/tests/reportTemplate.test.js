@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildPrintItems, cellText, emptyLayout, fieldText, fitWidth, layoutProblems, numText, nudged,
-  pickTemplate, roundPct, spreadRows, templateWarnings, hasWarnings,
+  pickTemplate, roundPct, spreadRows, templateWarnings, hasWarnings, normRect, isClick, tableRows,
 } from "../src/lib/reportTemplate.js";
 
 const ctx = { places: 2, passMark: 50, passText: "Pass", failText: "Fail", studentName: "Abebe Kebede", year: "2018" };
@@ -139,4 +139,33 @@ test("scans are only ever made smaller", () => {
   assert.deepEqual(fitWidth(3308, 4678, 1654), { w: 1654, h: 2339 });
   assert.deepEqual(fitWidth(800, 1000, 1654), { w: 800, h: 1000 });
   assert.deepEqual(fitWidth(0, 0), { w: 0, h: 0 });
+});
+
+test("a rectangle is the same whichever way it is dragged, and stays on the page", () => {
+  assert.deepEqual(normRect({ x: 10, y: 20 }, { x: 40, y: 50 }), { x: 10, y: 20, w: 30, h: 30 });
+  assert.deepEqual(normRect({ x: 40, y: 50 }, { x: 10, y: 20 }), { x: 10, y: 20, w: 30, h: 30 });
+  assert.deepEqual(normRect({ x: 40, y: 20 }, { x: 10, y: 50 }), { x: 10, y: 20, w: 30, h: 30 });
+  assert.deepEqual(normRect({ x: -5, y: 90 }, { x: 120, y: 130 }), { x: 0, y: 90, w: 100, h: 10 });
+});
+
+test("a press and release without dragging is a click", () => {
+  assert.equal(isClick(normRect({ x: 10, y: 10 }, { x: 10.2, y: 10.3 })), true);
+  assert.equal(isClick(normRect({ x: 10, y: 10 }, { x: 12, y: 10.3 })), false);
+  assert.equal(isClick(normRect({ x: 10, y: 10 }, { x: 10.2, y: 15 })), false);
+});
+
+test("a table rectangle is divided evenly into one row per subject", () => {
+  const rows = tableRows(["a", "b", "c", "d"], { x: 12, y: 30, w: 70, h: 40 }, 1);
+  assert.deepEqual(rows.map((r) => r.y), [30, 40, 50, 60]);
+  assert.ok(rows.every((r) => r.h === 10 && r.x === 12 && r.w === 70 && r.page === 1));
+  assert.deepEqual(rows.map((r) => r.subjectId), ["a", "b", "c", "d"]);
+  assert.equal(tableRows(["a"], { x: 0, y: 30, w: 50, h: 5 })[0].h, 5);
+  assert.deepEqual(tableRows([], { x: 0, y: 0, w: 1, h: 1 }), []);
+});
+
+test("a field keeps the height of the rectangle it was drawn with", () => {
+  const layout = { ...emptyLayout([{ path: "t/a.jpg", w: 1, h: 1 }]), fields: [{ id: "f", page: 0, key: "studentName", x: 10, y: 10, w: 40, h: 6 }, { id: "g", page: 0, key: "year", x: 10, y: 20, w: 20 }] };
+  const items = buildPrintItems(layout, { results: [] }, { studentName: "Abebe", year: "2018" });
+  assert.equal(items.find((i) => i.id === "f").h, 6);
+  assert.equal(items.find((i) => i.id === "g").h, 3);
 });

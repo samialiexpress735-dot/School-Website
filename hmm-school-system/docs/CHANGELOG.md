@@ -2,6 +2,20 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 7A, second update – the form designer works like the rectangle tool in Paint
+- Edited: `src/pages/reports/TemplateDesignerPage.jsx`, `src/lib/reportTemplate.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `tests/reportTemplate.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Added: nothing. Delete: nothing.
+- Run SQL: none. No database change (the layout already stores x, y, width and height).
+- What changed:
+  - **Nothing is added automatically any more.** After you load the form and choose the grade, a list \"Place on the form\" shows the grade's subjects and the student information and totals (name, overall average, rank and so on).
+  - **Draw a rectangle:** click a name in the list, then press, drag and release on the form. The rectangle you draw (shown dashed while you drag) is the position and size of that subject row, column or field. Dragging in any direction works; a plain click gives a normal size. After a subject, the next subject without a row is ready.
+  - **Draw the subjects table:** one rectangle over the whole table; the subjects that have no row yet are divided evenly inside it, one row each.
+  - **Edit the width and height:** drag the corner of any placed item (both change together), or type the width and height in the side panel. Items move in any direction by dragging or with the arrow keys.
+  - A single field now keeps the height of its rectangle when printed.
+- After this update: open Reports > School forms, open a form, choose the blank form and the grade, click \"Maths\" in the list and drag a rectangle over its line on the form, then try \"Draw the subjects table\", \"Draw a column\" and the student name and overall average, drag a corner to resize, and print a test page.
+- Tested: `npm test` passes (73 tests, 4 new for the rectangle rules). The app builds. In a browser simulation with a fake database, 35 checks passed on the new workflow (drawing in every direction, plain click, table rectangle, resize by corner, move, keys, save). **Not** tested in a real browser with a real mouse or on paper; touch screens are not supported by the designer.
+- Next: still the school's real blank report card (PDF or scan) to try it on, and section 8, item 11.
+
 ## Step 7A – the school's own report card forms
 - Added: `supabase/migrations/013_step7a_report_templates.sql`, `src/lib/reportTemplate.js`, `src/lib/formImages.js`, `src/pages/reports/ReportTemplatesPage.jsx`, `src/pages/reports/TemplateDesignerPage.jsx`, `src/pages/reports/FormSheet.jsx`, `src/pages/reports/FormCards.jsx`, `src/pages/reports/formData.js`, `tests/reportTemplate.test.js`, `tests/i18n.test.js`
 - Edited: `package.json` and `package-lock.json` (new library `pdfjs-dist`, loaded only when a PDF is chosen), `src/App.jsx`, `src/lib/nav.js`, `src/pages/reports/ReportsLayout.jsx`, `src/pages/reports/ReportCardPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

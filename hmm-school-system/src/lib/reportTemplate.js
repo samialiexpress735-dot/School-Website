@@ -110,7 +110,7 @@ export function buildPrintItems(layout, row, ctx) {
   }
   for (const f of layout.fields ?? []) {
     const text = fieldText(f.key, row, ctx);
-    if (text) items.push({ page: f.page ?? 0, x: f.x, y: f.y, w: f.w, h: 3, text, align: f.align ?? "start", size: f.size ?? 11, id: f.id });
+    if (text) items.push({ page: f.page ?? 0, x: f.x, y: f.y, w: f.w, h: f.h ?? 3, text, align: f.align ?? "start", size: f.size ?? 11, id: f.id });
   }
   return items;
 }
@@ -138,6 +138,27 @@ export function spreadRows(subjectIds, y1, y2, page = 0, h = 3) {
   return subjectIds.map((subjectId, i) => ({
     id: newId("r"), page, subjectId, h, y: roundPct(n === 1 ? y1 : y1 + ((y2 - y1) * i) / (n - 1)),
   }));
+}
+
+// ---------- drawing rectangles on the form (like the rectangle tool in Paint) ----------
+
+// The rectangle between where the pointer went down and where it is now, whichever way it was dragged.
+// Kept on the page (0 to 100 %) and to one decimal.
+export function normRect(a, b) {
+  const x1 = roundPct(clamp(Math.min(a.x, b.x), 0, 100)), y1 = roundPct(clamp(Math.min(a.y, b.y), 0, 100));
+  const x2 = roundPct(clamp(Math.max(a.x, b.x), 0, 100)), y2 = roundPct(clamp(Math.max(a.y, b.y), 0, 100));
+  return { x: x1, y: y1, w: roundPct(x2 - x1), h: roundPct(y2 - y1) };
+}
+
+// A press and release without dragging is a click, not a rectangle.
+export const isClick = (r) => r.w < 0.6 && r.h < 0.6;
+
+// A table drawn as one rectangle: one row per subject, dividing its height evenly. The rows keep the rectangle's left edge and width.
+export function tableRows(subjectIds, rect, page = 0) {
+  const n = subjectIds.length;
+  if (!n) return [];
+  const h = roundPct(rect.h / n);
+  return subjectIds.map((subjectId, i) => ({ id: newId("r"), page, subjectId, x: rect.x, w: rect.w, y: roundPct(rect.y + (rect.h * i) / n), h }));
 }
 
 // The template that serves a grade and stream: active, has a saved version, covers the grade, and either names

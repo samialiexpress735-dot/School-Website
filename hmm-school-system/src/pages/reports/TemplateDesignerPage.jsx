@@ -8,8 +8,8 @@ import { can, PROMOTION_DECIDERS } from "../../lib/roles.js";
 import { fetchAll, sortSections, subjectsOfGrade } from "../../lib/marksData.js";
 import { fileToPages, imagesReady, signedUrls, uploadPages, FormError } from "../../lib/formImages.js";
 import {
-  COLUMN_KINDS, FIELD_KEYS, buildPrintItems, clamp, emptyLayout, hasWarnings, layoutProblems, newId, nudged, roundPct,
-  spreadRows, templateWarnings,
+  COLUMN_KINDS, FIELD_KEYS, buildPrintItems, clamp, emptyLayout, hasWarnings, isClick, layoutProblems, newId, normRect, nudged,
+  roundPct, tableRows, templateWarnings,
 } from "../../lib/reportTemplate.js";
 import { loadReport } from "../../lib/reportsData.js";
 import { sectionLabel, useMarksRef } from "../marks/MarksParts.jsx";
@@ -55,7 +55,8 @@ function Designer({ template, initial, refData }) {
   const [versionNo, setVersionNo] = useState(initial?.versionNo ?? null);
   const [pageIdx, setPageIdx] = useState(0);
   const [tool, setTool] = useState("select");
-  const [firstY, setFirstY] = useState(null);
+  const [draft, setDraft] = useState(null); // the rectangle being drawn right now
+  const [armed, setArmed] = useState(null); // what the next click on the form places: { type: "subject", id } or { type: "field", key }
   const [sel, setSel] = useState(null); // { type: "row" | "column" | "field", id }
   const [busy, setBusy] = useState("");
   const [fileError, setFileError] = useState("");
@@ -128,59 +129,94 @@ function Designer({ template, initial, refData }) {
     return { x: roundPct(((e.clientX - r.left) / r.width) * 100), y: roundPct(((e.clientY - r.top) / r.height) * 100) };
   };
 
-  // Clicking on the page with a placing tool
-  const place = (e) => {
-    const p = pos(e);
-    if (tool === "rows") {
-      if (firstY === null) { setFirstY(p.y); return; }
-      if (!subjects.length) { setTool("select"); setFirstY(null); return; }
-      const [a, b] = firstY <= p.y ? [firstY, p.y] : [p.y, firstY];
-      const made = spreadRows(subjects.map((s) => s.id), roundPct(a - 1.5), roundPct(b - 1.5), pageIdx);
-      const ids = new Set(subjects.map((s) => s.id));
-      setLayout((l) => ({ ...l, rows: [...l.rows.filter((r) => !(r.page === pageIdx && ids.has(r.subjectId))), ...made] }));
-      setFirstY(null); setTool("select"); setSel({ type: "row", id: made[0].id });
+  // Drawing, like the rectangle tool in Paint: press where the rectangle starts, drag, release. A plain click (no dragging)
+  // places the item with a normal size. The rectangle drawn is the position and size of the item.
+  const drawStart = (e) => {
+    if (tool === "select") { setSel(null); return; }
+    if (tool === "place" && !armed) return;
+    drag.current = { mode: "draw", start: pos(e) };
+    setDraft({ ...pos(e), w: 0, h: 0 });
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const commit = (rect, point) => {
+    const click = isClick(rect);
+    const placedIds = new Set(layout.rows.map((r) => r.subjectId));
+    const lastH = layout.rows[layout.rows.length - 1]?.h ?? 3;
+    if (tool === "table") {
+      // One rectangle over the subjects table: the subjects without a row are divided evenly inside it
+      const todo = subjects.filter((x) => !placedIds.has(x.id));
+      if (click || !todo.length) return;
+      const made = tableRows(todo.map((x) => x.id), rect, pageIdx);
+      setLayout((l) => ({ ...l, rows: [...l.rows, ...made] }));
+      setTool("select"); setSel({ type: "row", id: made[0].id });
+    } else if (tool === "place" && armed?.type === "subject") {
+      const r = click
+        ? { id: newId("r"), page: pageIdx, subjectId: armed.id, x: 0, w: 100, y: roundPct(point.y - lastH / 2), h: lastH }
+        : { id: newId("r"), page: pageIdx, subjectId: armed.id, x: rect.x, w: rect.w, y: rect.y, h: rect.h };
+      setLayout((l) => ({ ...l, rows: [...l.rows, r] }));
+      setSel({ type: "row", id: r.id });
+      const next = subjects.find((x) => x.id !== armed.id && !placedIds.has(x.id));
+      if (next) setArmed({ type: "subject", id: next.id }); else { setArmed(null); setTool("select"); }
+    } else if (tool === "place" && armed?.type === "field") {
+      const f = click
+        ? { id: newId("f"), page: pageIdx, key: armed.key, x: point.x, y: roundPct(point.y - 1.5), w: 30, h: 3, align: "start", size: 11 }
+        : { id: newId("f"), page: pageIdx, key: armed.key, x: rect.x, y: rect.y, w: rect.w, h: rect.h, align: "start", size: 11 };
+      setLayout((l) => ({ ...l, fields: [...l.fields, f] }));
+      setArmed(null); setTool("select"); setSel({ type: "field", id: f.id });
     } else if (tool === "column") {
       const used = new Set(layout.columns.filter((c) => c.page === pageIdx).map((c) => c.kind));
-      const c = { id: newId("c"), page: pageIdx, kind: COLUMN_KINDS.find((k) => !used.has(k)) ?? "sem1", x: roundPct(p.x - 4), w: 8, align: "center", size: 11 };
+      const kind = COLUMN_KINDS.find((k) => !used.has(k)) ?? "sem1";
+      const c = click
+        ? { id: newId("c"), page: pageIdx, kind, x: roundPct(point.x - 4), w: 8, y: 0, h: 100, align: "center", size: 11 }
+        : { id: newId("c"), page: pageIdx, kind, x: rect.x, w: rect.w, y: rect.y, h: rect.h, align: "center", size: 11 };
       setLayout((l) => ({ ...l, columns: [...l.columns, c] }));
       setTool("select"); setSel({ type: "column", id: c.id });
-    } else if (tool === "field") {
-      const used = new Set(layout.fields.map((f) => f.key));
-      const f = { id: newId("f"), page: pageIdx, key: FIELD_KEYS.find((k) => !used.has(k)) ?? "studentName", x: p.x, y: roundPct(p.y - 1.5), w: 30, align: "start", size: 11 };
-      setLayout((l) => ({ ...l, fields: [...l.fields, f] }));
-      setTool("select"); setSel({ type: "field", id: f.id });
-    } else {
-      setSel(null);
     }
   };
 
-  // Dragging an item (rows move up and down, columns left and right, fields both ways)
+  // Moving an item by dragging it; its corner resizes it (width and height), like a rectangle in Paint
   const down = (type, it) => (e) => {
     if (tool !== "select") return;
     e.stopPropagation();
     setSel({ type, id: it.id });
     stageRef.current?.focus({ preventScroll: true });
-    drag.current = { type, id: it.id, start: pos(e), orig: { x: it.x, y: it.y } };
+    drag.current = { mode: "move", type, id: it.id, start: pos(e), orig: { x: it.x ?? 0, y: it.y ?? 0 } };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const startResize = (type, it) => (e) => {
+    if (tool !== "select") return;
+    e.stopPropagation();
+    setSel({ type, id: it.id });
+    drag.current = { mode: "resize", type, id: it.id, start: pos(e), orig: { w: it.w ?? 100, h: it.h ?? (type === "column" ? 100 : 3) } };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const move = (e) => {
     const d = drag.current;
     if (!d) return;
     const p = pos(e);
-    patch(d.type, d.id, () => ({
-      ...(d.type !== "row" ? { x: roundPct(d.orig.x + p.x - d.start.x) } : {}),
-      ...(d.type !== "column" ? { y: roundPct(d.orig.y + p.y - d.start.y) } : {}),
-    }));
+    if (d.mode === "draw") { setDraft(normRect(d.start, p)); return; }
+    if (d.mode === "resize") {
+      patch(d.type, d.id, () => ({ w: roundPct(clamp(d.orig.w + p.x - d.start.x, 1, 100)), h: roundPct(clamp(d.orig.h + p.y - d.start.y, 0.5, 100)) }));
+      return;
+    }
+    patch(d.type, d.id, () => ({ x: roundPct(d.orig.x + p.x - d.start.x), y: roundPct(d.orig.y + p.y - d.start.y) }));
   };
-  const up = () => { drag.current = null; };
+  const up = (e) => {
+    const d = drag.current;
+    drag.current = null;
+    if (d?.mode === "draw") {
+      const p = pos(e);
+      setDraft(null);
+      commit(normRect(d.start, p), d.start);
+    }
+  };
   const key = (e) => {
     if (!sel || !current) return;
     const dirs = { ArrowLeft: ["x", -1], ArrowRight: ["x", 1], ArrowUp: ["y", -1], ArrowDown: ["y", 1] };
     const d = dirs[e.key];
     if (!d) return;
-    if ((d[0] === "x" && sel.type === "row") || (d[0] === "y" && sel.type === "column")) return;
     e.preventDefault();
-    patch(sel.type, sel.id, (it) => ({ [d[0]]: nudged(it[d[0]], d[1], e.shiftKey) }));
+    patch(sel.type, sel.id, (it) => ({ [d[0]]: nudged(it[d[0]] ?? 0, d[1], e.shiftKey) }));
   };
 
   // ----- the blank form -----
@@ -233,7 +269,8 @@ function Designer({ template, initial, refData }) {
   const pageFields = layout.fields.filter((f) => (f.page ?? 0) === pageIdx);
   const subjectName = (id) => { const s = refData.subjects.find((x) => x.id === id); return s ? pick(s, lang) : "—"; };
   const num = (v, lo, hi, fallback) => (Number.isFinite(parseFloat(v)) ? clamp(parseFloat(v), lo, hi) : fallback);
-  const hint = tool === "rows" ? (firstY === null ? t("reports.designer.hints.rows1") : t("reports.designer.hints.rows2")) : t(`reports.designer.hints.${tool === "select" ? "select" : tool}`);
+  const armedName = armed?.type === "subject" ? subjectName(armed.id) : armed?.type === "field" ? t(`reports.designer.fieldKeys.${armed.key}`) : "";
+  const hint = tool === "place" && armed ? t(armed.type === "subject" ? "reports.designer.palette.hintSubject" : "reports.designer.palette.hintField", { name: armedName }) : t(`reports.designer.hints.${tool === "select" ? "select" : tool === "table" ? "table" : "column"}`);
 
   return (
     <>
@@ -281,11 +318,11 @@ function Designer({ template, initial, refData }) {
               )}
             </div>
             <div className="toolbar" role="group" aria-label={t("reports.designer.layoutTitle")}>
-              {["select", "rows", "column", "field"].map((k) => (
-                <button key={k} type="button" className={tool === k ? "btn-small" : "btn-small secondary"} aria-pressed={tool === k} onClick={() => { setTool(k); setFirstY(null); }}>{t(`reports.designer.tools.${k}`)}</button>
+              {["select", "table", "column"].map((k) => (
+                <button key={k} type="button" className={tool === k ? "btn-small" : "btn-small secondary"} aria-pressed={tool === k} onClick={() => { setTool(k); setArmed(null); }}>{t(`reports.designer.tools.${k}`)}</button>
               ))}
             </div>
-            <p className="small muted" role="status">{tool === "rows" && !subjects.length ? t("reports.designer.rowsNeedSubjects") : hint}</p>
+            <p className="small muted" role="status">{tool === "table" && !subjects.length ? t("reports.designer.rowsNeedSubjects") : hint}</p>
           </>
         )}
       </div>
@@ -303,20 +340,24 @@ function Designer({ template, initial, refData }) {
               onPointerCancel={up}
             >
               <FormSheet url={urls.get(layout.pages[pageIdx]?.path)} offsetMm={layout.offsetMm} items={shownItems.filter((it) => it.page === pageIdx)} className="on-screen">
-                <div className="stage-hit" onPointerDown={place} />
+                <div className="stage-hit" onPointerDown={drawStart} />
+                {draft && <div className="stage-draft" style={{ left: `${draft.x}%`, top: `${draft.y}%`, width: `${draft.w}%`, height: `${draft.h}%` }} />}
                 {pageRows.map((r) => (
-                  <div key={r.id} className={`stage-item row${sel?.id === r.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ left: 0, width: "100%", top: `${r.y}%`, height: `${r.h}%` }} onPointerDown={down("row", r)}>
+                  <div key={r.id} className={`stage-item row${sel?.id === r.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ left: `${r.x ?? 0}%`, width: `${r.w ?? 100}%`, top: `${r.y}%`, height: `${r.h}%` }} onPointerDown={down("row", r)}>
                     <span className="tag">{subjectName(r.subjectId)}</span>
+                    <span className="handle h-corner" onPointerDown={startResize("row", r)} />
                   </div>
                 ))}
                 {pageCols.map((c) => (
-                  <div key={c.id} className={`stage-item col${sel?.id === c.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ top: 0, height: "100%", left: `${c.x}%`, width: `${c.w}%` }} onPointerDown={down("column", c)}>
+                  <div key={c.id} className={`stage-item col${sel?.id === c.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ top: `${c.y ?? 0}%`, height: `${c.h ?? 100}%`, left: `${c.x}%`, width: `${c.w}%` }} onPointerDown={down("column", c)}>
                     <span className="tag">{t(`reports.designer.columnKinds.${c.kind}`)}</span>
+                    <span className="handle h-corner" onPointerDown={startResize("column", c)} />
                   </div>
                 ))}
                 {pageFields.map((f) => (
-                  <div key={f.id} className={`stage-item fld${sel?.id === f.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ left: `${f.x}%`, top: `${f.y}%`, width: `${f.w}%`, height: "3%" }} onPointerDown={down("field", f)}>
+                  <div key={f.id} className={`stage-item fld${sel?.id === f.id ? " sel" : ""}${realItems ? " faint" : ""}`} style={{ left: `${f.x}%`, top: `${f.y}%`, width: `${f.w}%`, height: `${f.h ?? 3}%` }} onPointerDown={down("field", f)}>
                     <span className="tag">{t(`reports.designer.fieldKeys.${f.key}`)}</span>
+                    <span className="handle h-corner" onPointerDown={startResize("field", f)} />
                   </div>
                 ))}
               </FormSheet>
@@ -324,6 +365,49 @@ function Designer({ template, initial, refData }) {
           </div>
 
           <aside className="designer-panel no-print" aria-label={t("reports.designer.items")}>
+            <div className="panel-box">
+              <strong>{t("reports.designer.palette.title")}</strong>
+              <p className="small muted">{t("reports.designer.palette.help")}</p>
+              <span className="small muted">{t("reports.designer.palette.subjects")}</span>
+              {subjects.length === 0 ? <p className="small muted">{t("reports.designer.rowsNeedSubjects")}</p> : (
+                <ul className="item-list palette">
+                  {subjects.map((x) => {
+                    const row = layout.rows.find((r) => r.subjectId === x.id);
+                    const on = armed?.type === "subject" && armed.id === x.id;
+                    return (
+                      <li key={x.id}>
+                        <button type="button" className={on ? "on" : ""} aria-pressed={on} onClick={() => {
+                          if (row) { setPageIdx(row.page ?? 0); setSel({ type: "row", id: row.id }); setTool("select"); setArmed(null); }
+                          else { setTool("place"); setArmed({ type: "subject", id: x.id }); setSel(null); }
+                        }}>
+                          <span aria-hidden="true">{row ? "✓ " : "○ "}</span>{pick(x, lang)}
+                          <span className="sr-only"> {row ? t("reports.designer.palette.placed") : t("reports.designer.palette.notPlaced")}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <span className="small muted">{t("reports.designer.palette.info")}</span>
+              <ul className="item-list palette">
+                {FIELD_KEYS.map((k) => {
+                  const f = layout.fields.find((x) => x.key === k);
+                  const on = armed?.type === "field" && armed.key === k;
+                  return (
+                    <li key={k}>
+                      <button type="button" className={on ? "on" : ""} aria-pressed={on} onClick={() => {
+                        if (f) { setPageIdx(f.page ?? 0); setSel({ type: "field", id: f.id }); setTool("select"); setArmed(null); }
+                        else { setTool("place"); setArmed({ type: "field", key: k }); setSel(null); }
+                      }}>
+                        <span aria-hidden="true">{f ? "✓ " : "○ "}</span>{t(`reports.designer.fieldKeys.${k}`)}
+                        <span className="sr-only"> {f ? t("reports.designer.palette.placed") : t("reports.designer.palette.notPlaced")}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
             {current && (
               <div className="panel-box">
                 <strong>{t(`reports.designer.${sel.type}`)}</strong>
@@ -334,8 +418,6 @@ function Designer({ template, initial, refData }) {
                         <option value="">{t("reports.designer.unassigned")}</option>
                         {subjects.map((s) => (<option key={s.id} value={s.id}>{pick(s, lang)}</option>))}
                       </select></label>
-                    <label><span className="small muted">{t("reports.designer.height")} %</span>
-                      <input type="number" step="0.1" min="0.5" max="20" value={current.h} onChange={(e) => patch("row", current.id, () => ({ h: num(e.target.value, 0.5, 20, current.h) }))} /></label>
                   </>
                 )}
                 {sel.type === "column" && (
@@ -350,10 +432,12 @@ function Designer({ template, initial, refData }) {
                       {FIELD_KEYS.map((k) => (<option key={k} value={k}>{t(`reports.designer.fieldKeys.${k}`)}</option>))}
                     </select></label>
                 )}
+                <label><span className="small muted">{t("reports.designer.width")} %</span>
+                  <input type="number" step="0.1" min="1" max="100" value={current.w ?? 100} onChange={(e) => patch(sel.type, current.id, () => ({ w: num(e.target.value, 1, 100, current.w ?? 100) }))} /></label>
+                <label><span className="small muted">{t("reports.designer.height")} %</span>
+                  <input type="number" step="0.1" min="0.5" max="100" value={current.h ?? (sel.type === "column" ? 100 : 3)} onChange={(e) => patch(sel.type, current.id, () => ({ h: num(e.target.value, 0.5, 100, current.h ?? 3) }))} /></label>
                 {sel.type !== "row" && (
                   <>
-                    <label><span className="small muted">{t("reports.designer.width")} %</span>
-                      <input type="number" step="0.1" min="1" max="100" value={current.w} onChange={(e) => patch(sel.type, current.id, () => ({ w: num(e.target.value, 1, 100, current.w) }))} /></label>
                     <label><span className="small muted">{t("reports.designer.align")}</span>
                       <select value={current.align || "start"} onChange={(e) => patch(sel.type, current.id, () => ({ align: e.target.value }))}>
                         {["start", "center", "end"].map((a) => (<option key={a} value={a}>{t(`reports.designer.aligns.${a}`)}</option>))}
