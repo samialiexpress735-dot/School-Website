@@ -17,12 +17,13 @@ The full plan is in **`docs/BLUEPRINT.md`**.
 | 5 | Done | Configurable marks, two semesters, results |
 | 6 | Done | Daily attendance, absence limit |
 | 7 | Done | Section roster, report cards, subject sheets, year-end promotion |
-| 8 | Next | Testing with real staff |
+| 8 | Done | Testing with real staff |
+| 10A | Done | Public website, first part: home, about, academics, admissions pre-registration, contact (`public.html`) |
 
 ## Folder guide
 
 - `src/` – the web app (`i18n/en.js` and `i18n/am.js` hold all English and Amharic text)
-- `supabase/migrations/` – database files, run in order: `001` to `012`
+- `supabase/migrations/` – database files, run in order: `001` to `014`
 - `docs/BLUEPRINT.md` – the blueprint
 
 ## Setup, step by step
@@ -35,7 +36,7 @@ The full plan is in **`docs/BLUEPRINT.md`**.
 ### 2. Create the Supabase test database
 1. Create a free project at supabase.com. Save the database password.
 2. Open **SQL Editor**. Paste and run these files **in this order**, one at a time:
-   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`, then `011_step6_fix_semester_dates.sql`, then `012_step7_promotion.sql`.
+   `supabase/migrations/001_core_schema.sql`, then `002_security_policies.sql`, then `003_seed_data.sql`, then `004_step2_structure.sql`, then `005_step3_staff.sql`, then `006_blueprint_sync.sql`, then `007_step4_students.sql`, then `008_step5_marks.sql`, then `009_step5_teacher_structures.sql`, then `010_step6_attendance.sql`, then `011_step6_fix_semester_dates.sql`, then `012_step7_promotion.sql`, then `013_step7a_report_templates.sql`, then `014_step10a_public_site.sql`.
 3. Open **Authentication > Sign In / Providers** and turn **off** "Allow new users to sign up" (only the administrator creates accounts).
 4. Open **Authentication > Users > Add user > Create new user**. Enter your email and a strong password, and tick auto-confirm.
 5. Make yourself the first administrator. In **SQL Editor** run (use your email):
@@ -101,3 +102,11 @@ Update zips contain only added and edited files (see `docs/CHANGELOG.md`). Expan
 ## Taking attendance
 - **Attendance > Daily roll call:** choose the section and the date. Everyone starts as present; change only the exceptions and press **Save attendance**. Teachers can change the last 3 school days of their own sections; the administration can correct any school day of an open year.
 - The **absence limit** (5 per semester by default) can be changed per section by the homeroom teacher or the administration, inside the roll call screen. **Summary** shows semester totals, and **Absence limit** lists the students who have reached it.
+
+## Public website
+- The public website and the staff system are **two separate websites** built from this project. Neither links to the other and each build contains only its own code.
+  - `npm run build` makes the staff system (the `dist` folder).
+  - `npm run build:public` makes the public website (the `dist` folder, from `public.html`).
+- Deploy them as two projects with two addresses. On Vercel: the staff project uses `npm run build`, the public project uses `npm run build:public`; both use output directory `dist` and the same two environment variables. On the VPS later: two folders and two Caddy blocks.
+- Put the school's phone, email, address, map link, admissions text and About texts in `src/public/siteInfo.js`. Anything left empty is not shown.
+- Until the staff screens exist, read pre-registrations and messages in the Supabase Table Editor (`admission_applications`, `contact_messages`) and add announcements in the `announcements` table (set `is_published` to true).

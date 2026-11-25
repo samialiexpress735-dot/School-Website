@@ -2,6 +2,23 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 10A – Public website, first part (home, about, academics, admissions, contact)
+- Added: `public.html`, `src/public/` (main, PublicApp, pages, i18n, texts, siteInfo, validate, api, public.css), `supabase/migrations/014_step10a_public_site.sql`, `tests/publicSite.test.js`
+- Edited: `vite.config.js` (two separate builds), `package.json` (new script `build:public`), `README.md`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Delete: nothing
+- Run SQL: `014_step10a_public_site.sql` (once, after 001-013).
+- What changed:
+  - **A separate, light public entry** (`public.html`, about 24 KB of its own code) in English and Amharic with the same language switch and Ethiopian dates. It does not load the administration code. No sign-in, no sign-up. A small "Staff sign in" link in the footer leads to the administration system (`index.html`).
+  - **Pages:** Home (welcome, live announcements, quick links), About, Academics (grades, streams, subjects of the current year, semester dates and holidays read from the system), Admissions (requirements, dates, fees and a pre-registration form), Contact (details and a message form).
+  - **What visitors can do in the database:** read live announcements; add a pre-registration or a message only through `submit_application()` and `submit_contact_message()`; read the calendar and subject lists through `public_calendar()` and `public_academics()`. They have no access to students, marks, staff, guardians or any other table. A hidden trap field discards robots; a safety limit allows at most 40 applications and 60 messages per hour for the whole school.
+  - **Who reads them:** applications: registrar, director, vice director. Messages: director, vice director. Announcements: written by the director and vice director (the system admin cannot publish).
+  - **School facts are not invented.** Phone, email, address, map link, office hours, admissions requirements, dates, fees and the About texts live in `src/public/siteInfo.js`. Anything left empty is not shown (the page says to ask the school office).
+- After running: open `public.html`. Send a test pre-registration and a test message, then in Supabase open the tables `admission_applications` and `contact_messages` to see them. Add a test announcement (`is_published` true) and check that it shows on the Home page.
+- Hosting: make two deployments from the same repository. **Vercel:** two projects; staff project keeps build command `npm run build`, public project uses `npm run build:public` (output directory `dist` for both; same two environment variables in both). **VPS later:** two Caddy blocks, one folder per build, for example `yourschool.com.et` (public) and `staff.yourschool.com.et` (staff).
+- Tested: `npm test` passes (88 tests, 8 new). The app builds. Migration 014 was run after 001-013 on a local PostgreSQL: visitors see only live announcements, cannot read or write the core tables, cannot insert applications or messages directly, robots and bad dates, phones and grades are refused, and the hourly limit stops a flood. Every page was rendered on the server in English and Amharic. **Not** tested in a real browser, on a phone, with a screen reader or against the Supabase service itself; the Amharic texts need a reader's check.
+- Not built yet (blueprint 4.11): the screens for staff to read and answer applications and messages and to write announcements (until then use Supabase Table Editor), news and events, photo gallery, downloads, staff page, and the **results lookup with student ID and PIN** (needs PIN issuing, publishing of results and the same calculation on the server).
+- Next: the staff screens for the public site, then the results lookup. Decisions for you: (a) the real phone, email, address, map and office hours; (b) admissions requirements, dates and fees; (c) the history, mission and director's message; (d) is the Amharic wording right?
+
 ## Step 7A, fourth update – a faster form designer (workspace, column types, delete and undo)
 - Edited: `src/pages/reports/TemplateDesignerPage.jsx`, `src/styles.css`, `src/i18n/en.js`, `src/i18n/am.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
 - Added: nothing. Delete: nothing.
