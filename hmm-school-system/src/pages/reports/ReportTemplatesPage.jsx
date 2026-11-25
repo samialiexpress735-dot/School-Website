@@ -7,6 +7,8 @@ import { useQuery, useNotice, Notice, Loading, LoadError, pick } from "../../lib
 import { can, PROMOTION_DECIDERS } from "../../lib/roles.js";
 import { TEMPLATE_KINDS } from "../../lib/reportTemplate.js";
 import { useMarksRef } from "../marks/MarksParts.jsx";
+import { useConfirm } from "../../components/Dialogs.jsx";
+import { deleteTemplateFiles } from "../../lib/formImages.js";
 
 // Reports > School forms: the list of the school's own report card forms, and a small form to start a new one.
 // Only the administration sees this tab (the database enforces it too, see 013).
@@ -22,6 +24,7 @@ export default function ReportTemplatesPage() {
 function List({ refData }) {
   const { t, lang } = useLang();
   const nav = useNavigate();
+  const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
   const notice = useNotice();
   const q = useQuery(async () => {
@@ -41,6 +44,32 @@ function List({ refData }) {
     const { error } = await supabase.from("report_templates").update({ is_active: !row.is_active }).eq("id", row.id);
     if (error) notice.fail(error, t("reports.templates.updateFailed"));
     else q.reload?.();
+  };
+
+  // Deleting removes the form and all its saved layouts for good, and then its page images. Cards are not stored
+  // anywhere (they are printed from the marks), so nothing already printed is affected; a grade whose form was
+  // deleted prints on the built-in plain card again. "Switch off" is the gentler choice and is offered in the dialog text.
+  const remove = async (row) => {
+    notice.clear();
+    const ok = await confirm({
+      title: t("dialog.deleteForm.title", { name: row.name }),
+      body: t("dialog.deleteForm.body"),
+      items: [
+        row.version_no ? t("dialog.deleteForm.itemVersions", { n: row.version_no }) : t("dialog.deleteForm.itemNoLayout"),
+        t("dialog.deleteForm.itemImages"),
+        t("dialog.deleteForm.itemFallback"),
+      ],
+      footer: t("dialog.deleteForm.footer"),
+      confirmLabel: t("dialog.deleteForm.confirm"),
+      tone: "danger",
+    });
+    if (!ok) return;
+    const { error } = await supabase.rpc("delete_report_template", { p_template: row.id });
+    if (error) return notice.fail(error, t("reports.templates.deleteFailed"));
+    const leftover = await deleteTemplateFiles(row.id);
+    q.reload?.();
+    if (leftover !== 0) notice.fail(null, t("reports.templates.deletedFilesLeft"));
+    else notice.setNotice({ type: "ok", text: t("reports.templates.deleted") });
   };
 
   return (
@@ -75,6 +104,7 @@ function List({ refData }) {
               <div className="row-actions">
                 <Link className="btn-small" to={`/${lang}/reports/templates/${row.id}`}>{t("reports.templates.open")}</Link>
                 <button type="button" className="btn-small secondary" onClick={() => toggle(row)}>{row.is_active ? t("reports.templates.switchOff") : t("reports.templates.switchOn")}</button>
+                <button type="button" className="btn-small danger" onClick={() => remove(row)}>{t("reports.templates.delete")}</button>
               </div>
             </li>
           ))}

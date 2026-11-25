@@ -24,6 +24,31 @@ export function AuthProvider({ children }) {
     setProfileLoaded(true);
   }, []);
 
+  // Quietly re-read the signed-in person's profile (name, role, active) so that a change made by the
+  // administration shows without signing out and in again. A failed read never changes anything.
+  const refreshProfile = useCallback(async (userId) => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, full_name_am, role, is_active")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!data) return;
+    setProfile((old) => (old && JSON.stringify(old) === JSON.stringify(data) ? old : data));
+  }, []);
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!isConfigured || !userId) return undefined;
+    const onVisible = () => { if (document.visibilityState === "visible") refreshProfile(userId); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [session?.user?.id, refreshProfile]);
+
   useEffect(() => {
     if (!isConfigured) return;
     let alive = true;
@@ -49,7 +74,7 @@ export function AuthProvider({ children }) {
   const signOut = () => supabase.auth.signOut();
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading: loading || (Boolean(session) && !profileLoaded), signIn, signOut }}>
+    <AuthContext.Provider value={{ session, profile, loading: loading || (Boolean(session) && !profileLoaded), signIn, signOut, refreshProfile: () => refreshProfile(session?.user?.id) }}>
       {children}
     </AuthContext.Provider>
   );

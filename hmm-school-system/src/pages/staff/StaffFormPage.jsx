@@ -134,12 +134,76 @@ function AccountPanel({ staff, onChanged }) {
   );
 }
 
+// Delete a staff member (teaching or non-teaching). The database has the final say (015): it refuses when the person
+// taught in a closed academic year, when the person has a login and the signed-in user is not the system admin,
+// and when it is the signed-in user's own record. The dialog first says what will change.
+function DeletePanel({ staff }) {
+  const confirm = useConfirm();
+  const { t, lang } = useLang();
+  const navigate = useNavigate();
+  const { profile, session } = useAuth();
+  const notice = useNotice();
+  const [busy, setBusy] = useState(false);
+  const isAdmin = profile?.role === "system_admin";
+  const own = Boolean(staff.profile_id) && staff.profile_id === session?.user?.id;
+  const blockedByLogin = Boolean(staff.profile_id) && !isAdmin;
+
+  async function remove() {
+    notice.clear();
+    setBusy(true);
+    // what the delete will take with it, so the person can decide with the facts
+    const [asg, home, lead] = await Promise.all([
+      supabase.from("teacher_assignments").select("id", { count: "exact", head: true }).eq("staff_id", staff.id),
+      supabase.from("sections").select("id", { count: "exact", head: true }).eq("homeroom_staff_id", staff.id),
+      supabase.from("departments").select("id", { count: "exact", head: true }).eq("leader_staff_id", staff.id),
+    ]);
+    if (asg.error || home.error || lead.error) { setBusy(false); return notice.fail(asg.error || home.error || lead.error); }
+    const items = [];
+    if (asg.count) items.push(t("staff.delete.itemAssignments", { n: asg.count }));
+    if (home.count) items.push(t("staff.delete.itemHomeroom", { n: home.count }));
+    if (lead.count) items.push(t("staff.delete.itemLeader", { n: lead.count }));
+    if (staff.profile_id) items.push(t("staff.delete.itemLogin"));
+    const ok = await confirm({
+      title: t("dialog.deleteStaff.title", { name: fullName(staff, lang) }),
+      body: t("dialog.deleteStaff.body"),
+      items,
+      footer: t("dialog.deleteStaff.footer"),
+      confirmLabel: t("dialog.deleteStaff.confirm"),
+      tone: "danger",
+    });
+    if (!ok) { setBusy(false); return; }
+    const { error } = await supabase.from("staff").delete().eq("id", staff.id);
+    setBusy(false);
+    if (error) {
+      const m = error.message || "";
+      const key = ["STAFF_HAS_CLOSED_YEAR_HISTORY", "STAFF_ACCOUNT_LINKED", "STAFF_OWN_ACCOUNT", "STAFF_DELETE_NOT_ALLOWED"].find((k) => m.includes(k));
+      return notice.fail(error, key ? t(`staff.delete.err.${key}`) : undefined);
+    }
+    navigate(`/${lang}/staff`);
+  }
+
+  return (
+    <section className="panel">
+      <h2>{t("staff.delete.title")}</h2>
+      <Notice notice={notice.notice} />
+      <p className="muted">{t("staff.delete.help")}</p>
+      {own && <p className="muted small">{t("staff.delete.own")}</p>}
+      {!own && blockedByLogin && <p className="muted small">{t("staff.delete.needAdmin")}</p>}
+      <p>
+        <button type="button" className="btn-small danger" disabled={busy || own || blockedByLogin} onClick={remove}>
+          {t("staff.delete.button")}
+        </button>
+      </p>
+    </section>
+  );
+}
+
 export default function StaffFormPage() {
   const { t, lang } = useLang();
   const { id } = useParams();
   const isNew = !id || id === "new";
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, session, refreshProfile } = useAuth();
   const editable = can(profile, STAFF_EDITORS);
   const notice = useNotice();
   const [f, setF] = useState(EMPTY);
@@ -175,6 +239,9 @@ export default function StaffFormPage() {
     const { data, error } = await q;
     if (error) return notice.fail(error, error.code === "23505" ? t("staff.duplicateId") : undefined);
     notice.ok();
+    // The database copies the names to the person's login, so their dashboard shows the new name.
+    // If this is the signed-in person's own record, show it now.
+    if (!isNew && record.data?.profile_id && record.data.profile_id === session?.user?.id) refreshProfile?.();
     if (isNew) navigate(`/${lang}/staff/${data.id}`);
     else record.reload();
   }
@@ -250,6 +317,7 @@ export default function StaffFormPage() {
       </form>
 
       {!isNew && record.data && <AccountPanel staff={record.data} onChanged={record.reload} />}
+      {!isNew && record.data && editable && <DeletePanel staff={record.data} />}
     </>
   );
 }

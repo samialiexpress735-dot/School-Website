@@ -90,6 +90,22 @@ export async function uploadPages(templateId, pages) {
   return out;
 }
 
+// Removes every page image kept for one template (its whole folder in the private bucket).
+// Called after the form itself was deleted. The form is already gone from the database, so a failure here only
+// leaves unused image files behind; it never brings the form back. Returns how many files could not be removed.
+export async function deleteTemplateFiles(templateId) {
+  try {
+    const { data, error } = await supabase.storage.from(BUCKET).list(templateId, { limit: 1000 });
+    if (error || !data) return -1;
+    const paths = data.filter((f) => f.name).map((f) => `${templateId}/${f.name}`);
+    if (!paths.length) return 0;
+    const res = await supabase.storage.from(BUCKET).remove(paths);
+    return res.error ? paths.length : 0;
+  } catch {
+    return -1;
+  }
+}
+
 // Short-lived links to the page images: Map(path -> url). The bucket is private, so a link only works for a signed-in user.
 export async function signedUrls(paths) {
   const unique = [...new Set(paths)];
