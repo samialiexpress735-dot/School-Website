@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildPrintItems, cellText, emptyLayout, fieldText, fitWidth, layoutProblems, numText, nudged,
-  pickTemplate, roundPct, spreadRows, templateWarnings, hasWarnings, normRect, isClick, tableRows,
+  pickTemplate, roundPct, spreadRows, templateWarnings, hasWarnings, normRect, isClick, tableRows, allFinal, notFinalList,
 } from "../src/lib/reportTemplate.js";
 
 const ctx = { places: 2, passMark: 50, passText: "Pass", failText: "Fail", studentName: "Abebe Kebede", year: "2018" };
@@ -168,4 +168,64 @@ test("a field keeps the height of the rectangle it was drawn with", () => {
   const items = buildPrintItems(layout, { results: [] }, { studentName: "Abebe", year: "2018" });
   assert.equal(items.find((i) => i.id === "f").h, 6);
   assert.equal(items.find((i) => i.id === "g").h, 3);
+});
+
+// "Finalized" = the subject is locked for the section in that semester (the lock behind the Finalize button)
+const locks = (...pairs) => { const set = new Set(pairs); return { ...ctx, finalSems: [1, 2], isFinal: (id, n) => set.has(`${id}|${n}`) }; };
+
+test("a subject that is not finalized prints nothing, even when every mark is entered", () => {
+  const maths = subj("m", [45, 50], [30, 50], 70);
+  const none = locks();
+  for (const kind of ["sem1", "sem2", "average", "result"]) assert.equal(cellText(kind, maths, none), "", kind);
+});
+
+test("each semester needs its own finalizing; the yearly average and result need both", () => {
+  const maths = subj("m", [45, 50], [30, 50], 75);
+  const only1 = locks("m|1");
+  assert.equal(cellText("sem1", maths, only1), "90");
+  assert.equal(cellText("sem2", maths, only1), "");
+  assert.equal(cellText("average", maths, only1), "");
+  assert.equal(cellText("result", maths, only1), "");
+  const both = locks("m|1", "m|2");
+  assert.equal(cellText("sem2", maths, both), "60");
+  assert.equal(cellText("average", maths, both), "75");
+  assert.equal(cellText("result", maths, both), "Pass");
+});
+
+test("finalizing one subject does not unlock another", () => {
+  const row = { results: [subj("m", [45, 50], [30, 50], 75), subj("e", [80, 100], [60, 100], 70)] };
+  const c = locks("m|1", "m|2");
+  const layout = { ...emptyLayout([{ path: "t/a.jpg", w: 1, h: 1 }]), columns: [{ id: "c", page: 0, kind: "average", x: 50, w: 8 }], rows: [{ id: "rm", page: 0, subjectId: "m", y: 30, h: 3 }, { id: "re", page: 0, subjectId: "e", y: 34, h: 3 }] };
+  const ids = buildPrintItems(layout, row, c).map((i) => i.id);
+  assert.deepEqual(ids, ["rm:c"]);
+});
+
+test("overall average, rank and pass/fail wait until every subject is finalized", () => {
+  const row = { overall: 71.5, complete: true, passed: true, rank: 3, results: [subj("m", [45, 50], [30, 50], 75), subj("e", [80, 100], [60, 100], 70)] };
+  const partly = locks("m|1", "m|2", "e|1");
+  assert.equal(allFinal(row, partly), false);
+  for (const k of ["overall", "rank", "verdict"]) assert.equal(fieldText(k, row, partly), "", k);
+  const all = locks("m|1", "m|2", "e|1", "e|2");
+  assert.equal(allFinal(row, all), true);
+  assert.equal(fieldText("overall", row, all), "71.5");
+  assert.equal(fieldText("rank", row, all), "3");
+  assert.equal(fieldText("verdict", row, all), "Pass");
+});
+
+test("fields that are not results (name, year, absent days) never wait for finalizing", () => {
+  const row = { overall: null, complete: false, passed: false, rank: null, results: [subj("m", [45, 50], null, null)] };
+  assert.equal(fieldText("studentName", row, locks()), "Abebe Kebede".length ? "Abebe Kebede" : "");
+  assert.equal(fieldText("year", row, locks()), "2018");
+});
+
+test("the note lists what is still not finalized, subject and semester", () => {
+  const results = [subj("m", [45, 50], null, null), subj("e", [45, 50], null, null)];
+  const list = notFinalList(results, (id, n) => id === "m" && n === 1, [1, 2]);
+  assert.deepEqual(list.map((x) => `${x.subject.id}${x.sem}`), ["m2", "e1", "e2"]);
+  assert.deepEqual(notFinalList(results, () => true, [1, 2]), []);
+});
+
+test("without a finalizing rule nothing is held back (the old behaviour for tools that give none)", () => {
+  assert.equal(cellText("sem1", subj("m", [45, 50], null, null), ctx), "90");
+  assert.equal(allFinal({ results: [subj("m", null, null, null)] }, ctx), true);
 });

@@ -72,6 +72,10 @@ export function numText(n, places = 2) {
 export function cellText(kind, x, ctx) {
   if (!x) return "";
   const places = ctx.places ?? 2;
+  // Only finalized subjects are printed: a semester cell needs that semester finalized for the subject, and the
+  // yearly average and the result need every semester finalized. (ctx.isFinal is left out when nothing is required.)
+  const need = kind === "sem1" ? [1] : kind === "sem2" ? [2] : ctx.finalSems ?? [1, 2];
+  if (ctx.isFinal && !need.every((n) => ctx.isFinal(x.subject.id, n))) return "";
   if (kind === "sem1" || kind === "sem2") {
     const r = x.perSem?.[kind === "sem1" ? 0 : 1];
     // A semester result with a mark still missing is not final: the box stays blank rather than show a partial total.
@@ -86,12 +90,26 @@ export function cellText(kind, x, ctx) {
 }
 
 // The text for a single field. `row` is the student's report row, `ctx` holds the already-formatted texts.
+// True when every subject of the student is finalized for every semester (or when finalizing is not required).
+export function allFinal(row, ctx) {
+  if (!ctx.isFinal) return true;
+  return (row?.results ?? []).every((x) => (ctx.finalSems ?? [1, 2]).every((n) => ctx.isFinal(x.subject.id, n)));
+}
+
+// Which subjects are still not finalized: [{ subject, sem }], for a note above the cards.
+export function notFinalList(results, isFinal, sems = [1, 2]) {
+  const out = [];
+  for (const x of results ?? []) for (const n of sems) if (!isFinal(x.subject.id, n)) out.push({ subject: x.subject, sem: n });
+  return out;
+}
+
 export function fieldText(key, row, ctx) {
   const places = ctx.places ?? 2;
   switch (key) {
-    case "overall": return row && row.overall !== null && row.complete ? numText(row.overall, places) : "";
-    case "rank": return row?.rank ? String(row.rank) : "";
-    case "verdict": return row && row.overall !== null && row.complete ? (row.passed ? ctx.passText ?? "" : ctx.failText ?? "") : "";
+    // Overall average, rank and pass/fail are printed only when every subject has been finalized
+    case "overall": return row && row.overall !== null && row.complete && allFinal(row, ctx) ? numText(row.overall, places) : "";
+    case "rank": return row?.rank && allFinal(row, ctx) ? String(row.rank) : "";
+    case "verdict": return row && row.overall !== null && row.complete && allFinal(row, ctx) ? (row.passed ? ctx.passText ?? "" : ctx.failText ?? "") : "";
     default: return ctx[key] === undefined || ctx[key] === null ? "" : String(ctx[key]);
   }
 }

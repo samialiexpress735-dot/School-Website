@@ -520,6 +520,7 @@ export default {
       offsetHelp: "If a test print is a little off, move everything by a few millimetres. It applies to the whole form.",
       previewTitle: "3. Check with a real student", previewNone: "Outlines only", previewWho: "Show the values of",
       previewSection: "Section", previewStudent: "Student", testPrint: "Print this page as a test",
+      previewFinalNote: "Only finalized subjects show a value. A subject that is not finalized for the section stays blank, and so do the overall average, rank and pass/fail until every subject is finalized.",
       testPrintHelp: "Print at 100% (not \"fit to page\") on A4 and hold it against the blank form to the light.",
       warnTitle: "Please check before you save",
       warn: {
@@ -533,6 +534,7 @@ export default {
     formUse: {
       label: "Print on", school: "The school's form", plain: "Plain card (built-in)",
       none: "This grade has no school form yet, so the plain card is used.",
+      notFinal: "These subjects are not finalized for this section, so their boxes stay blank on the form (and the overall average, rank and pass/fail too): {list}. Finalize them in Marks > Enter marks.",
       loading: "Preparing the form…", loadFailed: "The school's form could not be loaded. The plain card is used.",
       note: "Print at 100% (not \"fit to page\") on A4. The form is printed with the layout version that was current when it was opened.",
     },

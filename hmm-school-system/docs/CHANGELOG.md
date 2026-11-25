@@ -2,6 +2,19 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Step 7A, third update – the school's form prints only finalized subjects
+- Edited: `src/lib/reportTemplate.js`, `src/pages/reports/formData.js`, `src/pages/reports/FormCards.jsx`, `src/pages/reports/TemplateDesignerPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/reportTemplate.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
+- Added: nothing. Delete: nothing.
+- Run SQL: none. No database change (it reads the existing finalize locks, table `mark_locks`).
+- What changed:
+  - **A subject that is not finalized prints nothing on the school's form.** A semester box needs that semester finalized for the subject; the yearly average and Pass/Fail need both semesters; the overall average, rank and pass/fail of the year need every subject finalized.
+  - **A note above the cards** (not printed) lists the subjects and semesters not finalized yet, so a blank box is explained: \"... not finalized for this section ... Finalize them in Marks > Enter marks.\"
+  - **The designer's preview** with a real student follows the same rule, with a short line saying so.
+  - Name, ID, year, days absent and the other non-result fields are not affected. The plain built-in card is unchanged.
+- After this update: in Marks > Enter marks finalize one subject for a semester, then print the section's cards on the school's form. Only that subject's box for that semester should show a value; everything else that needs a finalized subject stays blank, and the note names what is missing. Finalize the rest and print again.
+- Tested: `npm test` passes (79 tests, 7 new for the finalized rule). The app builds. In the browser simulation, the printing check (12 checks) covers some subjects finalized and none finalized, and the designer check (35 checks) still passes. **Not** tested against the real database locks, a real browser or paper.
+- Next: the school's real blank report card (PDF or scan) and section 8, item 11. Decision for you: should the plain built-in card also show only finalized subjects?
+
 ## Step 7A, second update – the form designer works like the rectangle tool in Paint
 - Edited: `src/pages/reports/TemplateDesignerPage.jsx`, `src/lib/reportTemplate.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `tests/reportTemplate.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`
 - Added: nothing. Delete: nothing.

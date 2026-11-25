@@ -13,7 +13,7 @@ import {
 } from "../../lib/reportTemplate.js";
 import { loadReport } from "../../lib/reportsData.js";
 import { sectionLabel, useMarksRef } from "../marks/MarksParts.jsx";
-import { buildFormCtx, loadAttendance, loadForm, loadHomeroom } from "./formData.js";
+import { buildFormCtx, loadAttendance, loadForm, loadHomeroom, loadLocks } from "./formData.js";
 import FormSheet from "./FormSheet.jsx";
 
 const LIST = { row: "rows", column: "columns", field: "fields" };
@@ -90,7 +90,7 @@ function Designer({ template, initial, refData }) {
     [section?.id, gsQ.data, yearId, gradeId]
   );
   const extraQ = useQuery(
-    async () => (section ? { data: { att: await loadAttendance(section.id), hr: await loadHomeroom(section.homeroom_staff_id, lang) }, error: null } : { data: null, error: null }),
+    async () => (section ? { data: { att: await loadAttendance(section.id), hr: await loadHomeroom(section.homeroom_staff_id, lang), locks: await loadLocks(section.id) }, error: null } : { data: null, error: null }),
     [section?.id, lang]
   );
   const students = useMemo(() => {
@@ -101,7 +101,7 @@ function Designer({ template, initial, refData }) {
   const year = refData.years.find((y) => y.id === yearId);
   const realItems = useMemo(() => {
     if (!who || !section) return null;
-    const ctx = buildFormCtx({ row: who, refData, year, section, lang, t, homeroom: extraQ.data?.hr ?? "", attendance: extraQ.data?.att ?? null });
+    const ctx = buildFormCtx({ row: who, refData, year, section, lang, t, homeroom: extraQ.data?.hr ?? "", attendance: extraQ.data?.att ?? null, locks: extraQ.data?.locks ?? null });
     return buildPrintItems(layout, who, ctx);
   }, [who, section, layout, refData, year, lang, t, extraQ.data]);
   // A test print without a student: sample texts, so every place can be checked against the blank form
@@ -493,6 +493,7 @@ function Designer({ template, initial, refData }) {
             <button type="button" className="btn-small secondary" onClick={printTest}>{t("reports.designer.testPrint")}</button>
           </div>
           <p className="small muted">{t("reports.designer.testPrintHelp")}</p>
+          {section && <p className="small muted">{t("reports.designer.previewFinalNote")}</p>}
 
           {warn && hasWarnings(warn) && (
             <div className="flash error" role="alert">

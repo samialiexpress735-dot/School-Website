@@ -29,6 +29,14 @@ export async function loadAttendance(sectionId) {
   return new Map(data.map((r) => [r.enrollment_id, { absent: r.absent, late: r.late }]));
 }
 
+// Which subjects are finalized for this section: a Set of "semesterId|subjectId" (the lock behind the Finalize button).
+// null when the locks cannot be read: nothing is then printed that needs a finalized subject.
+export async function loadLocks(sectionId) {
+  const { data, error } = await supabase.from("mark_locks").select("semester_id,subject_id").eq("section_id", sectionId);
+  if (error || !data) return null;
+  return new Set(data.map((r) => `${r.semester_id}|${r.subject_id}`));
+}
+
 export async function loadHomeroom(staffId, lang) {
   if (!staffId) return "";
   const { data } = await supabase.from("staff").select("*").eq("id", staffId).maybeSingle();
@@ -36,14 +44,18 @@ export async function loadHomeroom(staffId, lang) {
 }
 
 // The already-formatted texts for one student that fieldText() and cellText() need.
-export function buildFormCtx({ row, refData, year, section, lang, t, homeroom = "", attendance = null }) {
+export function buildFormCtx({ row, refData, year, section, lang, t, homeroom = "", attendance = null, locks = null }) {
   const s = row.enrollment.students;
   const grade = refData.grades.find((g) => g.id === section.grade_id);
   const st = refData.streams.find((x) => x.id === (row.enrollment.stream_id || section.stream_id));
   const today = new Date();
   const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const a = attendance?.get(row.enrollment.id);
+  const semIds = refData.semesters.filter((x) => x.academic_year_id === year?.id).sort((p, q) => p.number - q.number).map((x) => x.id);
   return {
+    // only finalized subjects are printed
+    isFinal: (subjectId, n) => Boolean(locks && semIds[n - 1] && locks.has(`${semIds[n - 1]}|${subjectId}`)),
+    finalSems: semIds.map((_, i) => i + 1),
     places: refData.yearlyPlaces,
     passMark: refData.passMark,
     passText: t("marks.pass"),
