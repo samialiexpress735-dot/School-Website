@@ -4,15 +4,17 @@ import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, LoadError, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
-import EcDate from "../../components/EcDate.jsx";
+import EcDateInput from "../../components/EcDateInput.jsx";
 import { useConfirm } from "../../components/Dialogs.jsx";
 
 function SemesterRow({ sem, editable, onDone, notice }) {
   const { t } = useLang();
   const [start, setStart] = useState(sem.start_date || "");
   const [end, setEnd] = useState(sem.end_date || "");
+  const [bad, setBad] = useState({});
 
   async function save() {
+    if (bad.start || bad.end) return notice.fail(null, t("date.fixDates"));
     if (start && end && end < start) return notice.fail(null, t("years.invalidDates"));
     const { error } = await supabase.from("semesters").update({ start_date: start || null, end_date: end || null }).eq("id", sem.id);
     error ? notice.fail(error) : (notice.ok(), onDone());
@@ -28,12 +30,10 @@ function SemesterRow({ sem, editable, onDone, notice }) {
         {t("years.semester", { n: sem.number })} {sem.is_locked && <span className="pill">{t("common.locked")}</span>}
       </th>
       <td data-label={t("common.start")}>
-        <input type="date" aria-label={t("common.start")} value={start} onChange={(e) => setStart(e.target.value)} disabled={!editable} />
-        <EcDate value={start} />
+        <EcDateInput id={`sem-${sem.id}-s`} label={t("common.start")} value={start} onChange={(iso, st) => { setStart(iso); setBad((b) => ({ ...b, start: ["incomplete", "invalid", "range"].includes(st) })); }} disabled={!editable} compact />
       </td>
       <td data-label={t("common.end")}>
-        <input type="date" aria-label={t("common.end")} value={end} onChange={(e) => setEnd(e.target.value)} disabled={!editable} />
-        <EcDate value={end} />
+        <EcDateInput id={`sem-${sem.id}-e`} label={t("common.end")} value={end} onChange={(iso, st) => { setEnd(iso); setBad((b) => ({ ...b, end: ["incomplete", "invalid", "range"].includes(st) })); }} disabled={!editable} compact />
       </td>
       <td className="row-actions" data-label="">
         {editable && (
@@ -58,6 +58,7 @@ export default function YearsPage() {
   const [yearEc, setYearEc] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [badAdd, setBadAdd] = useState({});
 
   const { data, error, loading, reload } = useQuery(async () => {
     const [y, s] = await Promise.all([
@@ -75,6 +76,7 @@ export default function YearsPage() {
     notice.clear();
     const n = Number(yearEc);
     if (!Number.isInteger(n) || n < 1990 || n > 2100) return notice.fail(null, t("years.invalidYear"));
+    if (badAdd.start || badAdd.end) return notice.fail(null, t("date.fixDates"));
     if (startDate && endDate && endDate < startDate) return notice.fail(null, t("years.invalidDates"));
     const { data: created, error: err } = await supabase
       .from("academic_years")
@@ -118,14 +120,10 @@ export default function YearsPage() {
             <input id="yearEc" type="number" inputMode="numeric" value={yearEc} onChange={(e) => setYearEc(e.target.value)} placeholder={t("years.yearEcHelp")} required />
           </div>
           <div>
-            <label htmlFor="ystart">{t("common.start")}</label>
-            <input id="ystart" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            <EcDate value={startDate} />
+            <EcDateInput id="ystart" label={t("common.start")} value={startDate} onChange={(iso, st) => { setStartDate(iso); setBadAdd((b) => ({ ...b, start: ["incomplete", "invalid", "range"].includes(st) })); }} />
           </div>
           <div>
-            <label htmlFor="yend">{t("common.end")}</label>
-            <input id="yend" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            <EcDate value={endDate} />
+            <EcDateInput id="yend" label={t("common.end")} value={endDate} onChange={(iso, st) => { setEndDate(iso); setBadAdd((b) => ({ ...b, end: ["incomplete", "invalid", "range"].includes(st) })); }} />
           </div>
           <div className="formgrid-action"><button type="submit" className="btn-small">{t("common.add")}</button></div>
           <p className="muted small full">{t("years.dateNote")}</p>

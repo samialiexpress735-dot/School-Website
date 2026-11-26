@@ -6,6 +6,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, LoadError, fullName, pick, Loading } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS } from "../../lib/roles.js";
 import { downloadExport } from "../../lib/exporter.js";
+import { gcToEc, formatEcText } from "../../lib/ethiopian.js";
 
 export default function StaffListPage() {
   const { t, lang } = useLang();
@@ -38,6 +39,7 @@ export default function StaffListPage() {
   async function exportFile(format) {
     setExporting(true); setExportFailed(false);
     const col = (label, get, width) => ({ label: t(label), get, width });
+    const ecText = (gc) => { const e = gcToEc(gc); return e ? formatEcText({ y: e.year, m: e.month, d: e.day }) : ""; };
     try {
       await downloadExport("staff", {
         sheetName: t("staff.title"),
@@ -49,9 +51,9 @@ export default function StaffListPage() {
           col("staff.firstName", (s) => s.first_name), col("staff.fatherName", (s) => s.father_name), col("staff.grandfatherName", (s) => s.grandfather_name),
           col("staff.firstNameAm", (s) => s.first_name_am), col("staff.fatherNameAm", (s) => s.father_name_am), col("staff.grandfatherNameAm", (s) => s.grandfather_name_am),
           col("staff.sex", (s) => (s.sex ? t(`staff.sexes.${s.sex}`) : ""), 10),
-          col("staff.dob", (s) => s.date_of_birth, 14), col("staff.phone", (s) => s.phone, 16), col("staff.email", (s) => s.email, 26), col("staff.address", (s) => s.address, 26),
+          col("staff.dob", (s) => ecText(s.date_of_birth), 16), col("export.cols.dob", (s) => s.date_of_birth, 14), col("staff.phone", (s) => s.phone, 16), col("staff.email", (s) => s.email, 26), col("staff.address", (s) => s.address, 26),
           col("staff.department", (s) => pick(s.departments, lang), 22), col("staff.qualification", (s) => s.qualification), col("staff.fieldOfStudy", (s) => s.field_of_study, 20),
-          col("staff.hireDate", (s) => s.hire_date, 14), col("staff.status", (s) => t(`staff.statuses.${s.employment_status}`), 14),
+          col("staff.hireDate", (s) => ecText(s.hire_date), 16), col("export.cols.hireGc", (s) => s.hire_date, 14), col("staff.status", (s) => t(`staff.statuses.${s.employment_status}`), 14),
         ],
       }, format);
     } catch { setExportFailed(true); }

@@ -4,7 +4,7 @@ import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, Loading, LoadError, useNudge, pick, fullName } from "../../lib/ui.jsx";
 import { newlyFlagged } from "../../lib/motion.js";
-import { formatEc } from "../../lib/ethiopian.js";
+import EcDateInput from "../../components/EcDateInput.jsx";
 import { can, ATTENDANCE_ADMINS, ATTENDANCE_TAKERS } from "../../lib/roles.js";
 import {
   STATUSES, DEFAULT_EDIT_DAYS, calendarMap, changedRows, dayProblem, inEditWindow, latestSchoolDay,
@@ -86,12 +86,11 @@ function Inner({ refData }) {
           <span className="small muted">{t("attendance.date")}</span>
           <div className="datenav-row">
             <button type="button" className="btn-small secondary" onClick={() => setDate(stepSchoolDay(date, -1, calendar))} aria-label={t("attendance.prevDay")} title={t("attendance.prevDay")}>‹</button>
-            <input type="date" value={date} max={today} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label={t("attendance.date")} />
+            <EcDateInput id="rc_date" label={t("attendance.date")} value={date} max={today} onChange={(iso) => iso && setDate(iso)} compact />
             <button type="button" className="btn-small secondary" onClick={() => setDate(stepSchoolDay(date, 1, calendar, today))} disabled={date >= today} aria-label={t("attendance.nextDay")} title={t("attendance.nextDay")}>›</button>
           </div>
         </div>
       </div>
-      {date && <p className="small ec-line">{formatEc(date, lang)}</p>}
       <SemesterDatesNotice semesters={refData.semesters} yearId={yearId} />
 
       {vis.sections.length === 0 ? (

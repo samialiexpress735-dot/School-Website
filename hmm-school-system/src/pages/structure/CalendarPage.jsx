@@ -5,6 +5,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, LoadError, pick, Loading, useRowFlash } from "../../lib/ui.jsx";
 import { can, STRUCTURE_EDITORS } from "../../lib/roles.js";
 import EcDate from "../../components/EcDate.jsx";
+import EcDateInput from "../../components/EcDateInput.jsx";
 import { useConfirm } from "../../components/Dialogs.jsx";
 
 // All Monday-Friday dates from "from" to "to" (inclusive), as YYYY-MM-DD.
@@ -29,6 +30,7 @@ export default function CalendarPage() {
   const [yearId, setYearId] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [badCal, setBadCal] = useState({});
   const [kind, setKind] = useState("holiday");
   const [name, setName] = useState("");
   const [nameAm, setNameAm] = useState("");
@@ -47,6 +49,7 @@ export default function CalendarPage() {
   async function add(e) {
     e.preventDefault();
     notice.clear();
+    if (!from || badCal.from || badCal.to) return notice.fail(null, t("date.fixDates"));
     const last = to || from;
     if (last < from) return notice.fail(null, t("calendar.badRange"));
     const dates = weekdaysBetween(from, last);
@@ -86,14 +89,10 @@ export default function CalendarPage() {
         <form className="panel formgrid" onSubmit={add}>
           <h2>{t("calendar.add")}</h2>
           <div>
-            <label htmlFor="cf">{t("calendar.from")}</label>
-            <input id="cf" type="date" value={from} onChange={(e) => setFrom(e.target.value)} required />
-            <EcDate value={from} />
+            <EcDateInput id="cf" label={t("calendar.from")} value={from} required onChange={(iso, st) => { setFrom(iso); setBadCal((b) => ({ ...b, from: ["incomplete", "invalid", "range"].includes(st) })); }} />
           </div>
           <div>
-            <label htmlFor="ct">{t("calendar.to")}</label>
-            <input id="ct" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
-            <EcDate value={to} />
+            <EcDateInput id="ct" label={t("calendar.to")} value={to} min={from || undefined} onChange={(iso, st) => { setTo(iso); setBadCal((b) => ({ ...b, to: ["incomplete", "invalid", "range"].includes(st) })); }} />
           </div>
           <div>
             <label htmlFor="ck">{t("calendar.kind")}</label>

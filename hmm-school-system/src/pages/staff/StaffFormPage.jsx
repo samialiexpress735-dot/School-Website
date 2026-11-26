@@ -6,6 +6,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, useNotice, Notice, LoadError, pick, fullName, Loading } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS, ALL_ROLES } from "../../lib/roles.js";
 import { useConfirm } from "../../components/Dialogs.jsx";
+import EcDateInput from "../../components/EcDateInput.jsx";
 
 const EMPTY = {
   employee_id: "", staff_type: "teaching", position: "",
@@ -207,6 +208,7 @@ export default function StaffFormPage() {
   const editable = can(profile, STAFF_EDITORS);
   const notice = useNotice();
   const [f, setF] = useState(EMPTY);
+  const [badDates, setBadDates] = useState({}); // dates typed only partly or wrongly, by field
 
   const departments = useQuery(() => supabase.from("departments").select("*").order("name"), []);
   const record = useQuery(() => (isNew ? { data: null } : supabase.from("staff").select("*").eq("id", id).maybeSingle()), [id]);
@@ -220,11 +222,16 @@ export default function StaffFormPage() {
   }, [record.data]);
 
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const setDate = (k) => (iso, st) => {
+    setF((x) => ({ ...x, [k]: iso }));
+    setBadDates((b) => ({ ...b, [k]: ["incomplete", "invalid", "range"].includes(st) }));
+  };
 
   async function save(e) {
     e.preventDefault();
     notice.clear();
     if (!f.first_name.trim() || !f.father_name.trim() || !f.sex) return notice.fail(null, t("staff.required"));
+    if (Object.values(badDates).some(Boolean)) return notice.fail(null, t("date.fixDates"));
     const payload = {};
     TEXT_FIELDS.forEach((k) => { payload[k] = typeof f[k] === "string" && f[k].trim() === "" ? null : (typeof f[k] === "string" ? f[k].trim() : f[k]); });
     payload.staff_type = f.staff_type;
@@ -290,7 +297,7 @@ export default function StaffFormPage() {
             {["male", "female"].map((k) => <option key={k} value={k}>{t(`staff.sexes.${k}`)}</option>)}
           </select>
         </div>
-        {field("date_of_birth", t("staff.dob"), { type: "date" })}
+        <EcDateInput id="f_dob" label={t("staff.dob")} value={f.date_of_birth} onChange={setDate("date_of_birth")} min="1900-01-01" max={new Date().toISOString().slice(0, 10)} disabled={dis} />
         {field("phone", t("staff.phone"), { type: "tel", inputMode: "tel" })}
         {field("email", t("staff.email"), { type: "email" })}
         {field("address", t("staff.address"))}
@@ -304,7 +311,7 @@ export default function StaffFormPage() {
         </div>
         {field("qualification", t("staff.qualification"))}
         {field("field_of_study", t("staff.fieldOfStudy"))}
-        {field("hire_date", t("staff.hireDate"), { type: "date" })}
+        <EcDateInput id="f_hire" label={t("staff.hireDate")} value={f.hire_date} onChange={setDate("hire_date")} min="1950-01-01" disabled={dis} />
         <div>
           <label htmlFor="f_status">{t("staff.status")}</label>
           <select id="f_status" value={f.employment_status} onChange={set("employment_status")} disabled={dis}>

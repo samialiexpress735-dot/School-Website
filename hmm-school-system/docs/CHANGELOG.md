@@ -2,6 +2,15 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Import update 4 – every date is entered in the Ethiopian calendar
+- Added: `src/components/EcDateInput.jsx`, `src/lib/ecDateParts.js`
+- Edited: `src/pages/staff/StaffFormPage.jsx`, `src/pages/staff/StaffListPage.jsx`, `src/pages/attendance/RollCallPage.jsx`, `src/pages/structure/YearsPage.jsx`, `src/pages/structure/CalendarPage.jsx`, `src/lib/staffImporter.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `tests/importTemplate.test.js`, `docs/CHANGELOG.md`
+- Run SQL: none. The database still stores standard (Gregorian) dates.
+- What changed:
+  - New date input: day, month (with Pagume) and year in the Ethiopian calendar, and the standard (GC) date shown underneath, like the student date of birth. It replaces every browser date picker: staff date of birth and hire date, attendance date, semester start/end, new academic year start/end, school calendar from/to.
+  - A date left half-filled or impossible (for example Pagume 6 in a normal year) is flagged and blocks saving, instead of being saved as empty.
+  - Staff import: date of birth and hire date are now written as Ethiopian dd/mm/yyyy (same as the student date of birth). Staff export shows both the Ethiopian and the standard date.
+
 ## Import update 3 – CSV downloads next to the Excel ones
 - Edited: `src/lib/importer.js`, `src/lib/staffImporter.js`, `src/lib/exporter.js`, `src/pages/students/ImportPage.jsx`, `src/pages/staff/StaffImportPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/staff/StaffListPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/importTemplate.test.js`, `docs/CHANGELOG.md`
 - Run SQL: none.
