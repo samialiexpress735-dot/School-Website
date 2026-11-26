@@ -31,6 +31,7 @@ import StaffListPage from "./pages/staff/StaffListPage.jsx";
 import StaffFormPage from "./pages/staff/StaffFormPage.jsx";
 import AssignmentsPage from "./pages/staff/AssignmentsPage.jsx";
 import DepartmentsPage from "./pages/staff/DepartmentsPage.jsx";
+import StaffImportPage from "./pages/staff/StaffImportPage.jsx";
 import { LangProvider, LANGS, DEFAULT_LANG } from "./i18n/index.jsx";
 import { DialogProvider } from "./components/Dialogs.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -56,6 +57,7 @@ function LangRoutes() {
         <Route path="staff" element={<Protected><StaffLayout /></Protected>}>
           <Route index element={<StaffListPage />} />
           <Route path="new" element={<StaffFormPage />} />
+          <Route path="import" element={<StaffImportPage />} />
           <Route path="assignments" element={<AssignmentsPage />} />
           <Route path="departments" element={<DepartmentsPage />} />
           <Route path=":id" element={<StaffFormPage />} />

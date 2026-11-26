@@ -2,6 +2,22 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Import update 2 – dropdowns and lists in the templates, Excel export of students and staff
+- Added: `src/lib/exporter.js`
+- Edited: `src/lib/importer.js`, `src/lib/staffImporter.js`, `src/pages/students/ImportPage.jsx`, `src/pages/staff/StaffImportPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/staff/StaffListPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/importTemplate.test.js`, `package.json`, `package-lock.json`, `docs/CHANGELOG.md`
+- Run SQL: none. New library: `fflate` (run `npm install`).
+- What changed:
+  - **Templates have dropdowns.** Students: sex, grade, stream, shift, enrollment status, and section (names that exist in the chosen academic year). Staff: staff type, sex, employment status, and department (from the database). A **Lists** sheet shows the real sections / departments. Dropdowns cover the first 1000 rows.
+  - **Download Excel** button on the student list and the staff list. It exports everyone matching the current search and filters (all pages, not only the 50 shown), with headers in the page language. Students include the main guardian.
+
+## Import update 1 – Excel templates for students, and bulk staff import
+- Added: `src/pages/staff/StaffImportPage.jsx`, `src/lib/staffImporter.js`, `tests/importTemplate.test.js`
+- Edited: `src/lib/importer.js`, `src/pages/students/ImportPage.jsx`, `src/pages/staff/StaffLayout.jsx`, `src/App.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `package.json`, `package-lock.json`, `docs/CHANGELOG.md`
+- Run SQL: none. New library: `write-excel-file` (run `npm install`).
+- What changed:
+  - **Student template** is now an Excel (.xlsx) file: bold header row (first_name, father_name, ...), one example row, and an *Instructions* sheet. CSV uploads still work.
+  - **Staff > Import staff** (admin, director, vice director): download an Excel template, fill one row per person, upload, check the preview, import. Checks names, sex, staff type, dates, email, department name, duplicate employee IDs. A results file can be downloaded.
+
 ## Mobile update 1 – one-letter language button, simpler dashboard, phone-friendly semester and department editing
 - Added: nothing.
 - Edited: `src/components/LangSwitch.jsx`, `src/components/Shell.jsx`, `src/pages/DashboardPage.jsx`, `src/pages/structure/YearsPage.jsx`, `src/pages/staff/DepartmentsPage.jsx`, `src/lib/dashboard.js`, `src/lib/dashboardData.js`, `src/i18n/en.js`, `src/i18n/am.js`, `src/styles.css`, `tests/dashboard.test.js`, `tests/nav.test.js`, `docs/BLUEPRINT.md`, `docs/CHANGELOG.md`

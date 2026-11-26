@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError } from "../../lib/ui.jsx";
 import { DEFAULT_AGE_LIMITS } from "../../lib/age.js";
-import { templateCsv, resultsCsv, downloadText, readImportFile, checkRow, nameKey } from "../../lib/importer.js";
+import { studentTemplateXlsx, resultsCsv, downloadText, downloadBlob, readImportFile, checkRow, nameKey } from "../../lib/importer.js";
 
 const CHUNK = 50;
 
@@ -15,6 +15,7 @@ export default function ImportPage() {
   const [readError, setReadError] = useState(false);
   const [progress, setProgress] = useState(null);
   const [outcome, setOutcome] = useState(null); // { ok, failed, results }
+  const [templateError, setTemplateError] = useState(false);
 
   const ref = useQuery(async () => {
     const [y, g, s, a] = await Promise.all([
@@ -40,6 +41,11 @@ export default function ImportPage() {
   if (ref.loading || sections.loading) return <Loading />;
   if (ref.error || sections.error) return <LoadError />;
   if (!ref.data.years.length) return <p className="empty">{t("import.noYear")}</p>;
+
+  async function downloadTemplate() {
+    setTemplateError(false);
+    try { downloadBlob("student-import-template.xlsx", await studentTemplateXlsx({ grades: ref.data.grades, streams: ref.data.streams, sections: sections.data || [] })); } catch { setTemplateError(true); }
+  }
 
   async function onFile(e) {
     const file = e.target.files?.[0];
@@ -111,7 +117,8 @@ export default function ImportPage() {
 
       <section className="panel">
         <h2>{t("import.step1")}</h2>
-        <button type="button" className="btn-small secondary" onClick={() => downloadText("student-import-template.csv", templateCsv())}>{t("import.download")}</button>
+        <button type="button" className="btn-small secondary" onClick={downloadTemplate}>{t("import.download")}</button>
+        {templateError && <p className="flash error" role="alert">{t("import.templateFailed")}</p>}
       </section>
 
       <section className="panel">

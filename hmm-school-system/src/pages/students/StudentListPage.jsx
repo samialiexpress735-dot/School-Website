@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/AuthContext.jsx";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError, pick, fullName } from "../../lib/ui.jsx";
 import { can, REGISTRARS } from "../../lib/roles.js";
+import { downloadExport } from "../../lib/exporter.js";
 import { looksLikeStudentCode, isValidStudentCode } from "../../lib/studentCode.js";
 
 const PAGE = 50;
@@ -23,6 +24,8 @@ export default function StudentListPage() {
   const [sectionId, setSectionId] = useState(""); // "none" = not placed
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
 
   useEffect(() => {
     const id = setTimeout(() => { setQ(safe(search)); setPage(0); }, 300);
@@ -44,17 +47,10 @@ export default function StudentListPage() {
     if (ref.data && !yearId) setYearId((ref.data.years.find((y) => y.is_current) || ref.data.years[0])?.id || "all");
   }, [ref.data]); // eslint-disable-line
 
-  const list = useQuery(async () => {
-    if (!yearId) return { data: { rows: [], count: 0 } };
+  // the filters of the toolbar, used by the list and by the Excel export so both show the same students
+  function filtered(select, countOpt) {
     const byYear = yearId !== "all";
-    let query = supabase
-      .from("students")
-      .select(
-        byYear
-          ? "*, enrollments!inner(id, grade_id, section_id, stream_id, status, academic_year_id, sections(name, shift))"
-          : "*, enrollments(id, grade_id, section_id, stream_id, status, academic_year_id, sections(name, shift), academic_years(year_ec))",
-        { count: "exact" }
-      );
+    let query = supabase.from("students").select(select(byYear), countOpt);
     if (byYear) {
       query = query.eq("enrollments.academic_year_id", yearId);
       if (gradeId) query = query.eq("enrollments.grade_id", gradeId);
@@ -69,6 +65,14 @@ export default function StudentListPage() {
           .map((c) => `${c}.ilike.%${token}%`).join(",")
       );
     }
+    return query;
+  }
+
+  const list = useQuery(async () => {
+    if (!yearId) return { data: { rows: [], count: 0 } };
+    const query = filtered((byYear) => (byYear
+      ? "*, enrollments!inner(id, grade_id, section_id, stream_id, status, academic_year_id, sections(name, shift))"
+      : "*, enrollments(id, grade_id, section_id, stream_id, status, academic_year_id, sections(name, shift), academic_years(year_ec))"), { count: "exact" });
     const { data, error, count } = await query.order("first_name").order("father_name").range(page * PAGE, page * PAGE + PAGE - 1);
     return error ? { error } : { data: { rows: data, count: count ?? data.length } };
   }, [yearId, gradeId, streamId, sectionId, status, q, page]);
@@ -87,6 +91,48 @@ export default function StudentListPage() {
     if (yearId === "all") list2.sort((a, b) => (b.academic_years?.year_ec || 0) - (a.academic_years?.year_ec || 0));
     return list2[0] || null;
   };
+
+  // every student that matches the toolbar filters (not just the 50 on this page), with the main guardian
+  async function exportExcel() {
+    setExporting(true); setExportFailed(false);
+    try {
+      const all = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await filtered((byYear) => (byYear
+          ? "*, enrollments!inner(grade_id, stream_id, status, academic_year_id, sections(name, shift)), student_guardians(relationship, is_primary, guardians(full_name, phone))"
+          : "*, enrollments(grade_id, stream_id, status, academic_year_id, sections(name, shift), academic_years(year_ec)), student_guardians(relationship, is_primary, guardians(full_name, phone))"))
+          .order("first_name").order("father_name").order("student_code").range(from, from + 999);
+        if (error) throw error;
+        all.push(...data);
+        if (data.length < 1000) break;
+      }
+      const guardianOf = (s) => { const g = [...(s.student_guardians || [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary))[0]; return g ? { ...g.guardians, relationship: g.relationship } : {}; };
+      const gradeNo = (s) => grades.find((x) => x.id === enrollmentOf(s)?.grade_id)?.number;
+      const streamOf = (s) => { const st = streams.find((x) => x.id === enrollmentOf(s)?.stream_id); return st && st.code !== "general" ? pick(st, lang) : ""; };
+      const col = (label, get, width) => ({ label, get, width });
+      await downloadExport("students", {
+        sheetName: t("students.title"),
+        rows: all,
+        columns: [
+          col(t("students.list.id"), (s) => s.student_code, 14),
+          col(t("export.cols.firstName"), (s) => s.first_name), col(t("export.cols.fatherName"), (s) => s.father_name), col(t("export.cols.grandfatherName"), (s) => s.grandfather_name),
+          col(t("export.cols.firstNameAm"), (s) => s.first_name_am), col(t("export.cols.fatherNameAm"), (s) => s.father_name_am), col(t("export.cols.grandfatherNameAm"), (s) => s.grandfather_name_am),
+          col(t("students.wizard.sex"), (s) => t(`students.sexes.${s.sex}`), 10),
+          col(t("export.cols.dobEc"), (s) => s.date_of_birth_ec, 14), col(t("export.cols.dob"), (s) => s.date_of_birth, 14),
+          col(t("students.list.grade"), gradeNo, 8), col(t("common.stream"), streamOf, 14),
+          col(t("students.list.section"), (s) => enrollmentOf(s)?.sections?.name, 10),
+          col(t("export.cols.shift"), (s) => { const sh = enrollmentOf(s)?.sections?.shift; return sh ? t(`sections.shifts.${sh}`) : ""; }, 12),
+          col(t("export.cols.enrollStatus"), (s) => { const e = enrollmentOf(s); return e ? t(`students.enrollStatuses.${e.status}`) : ""; }, 14),
+          col(t("common.status"), (s) => t(`students.statuses.${s.status}`), 14),
+          col(t("export.cols.phone"), (s) => s.phone, 16),
+          col(t("export.cols.region"), (s) => s.region), col(t("export.cols.zone"), (s) => s.zone), col(t("export.cols.woreda"), (s) => s.woreda), col(t("export.cols.kebele"), (s) => s.kebele, 10),
+          col(t("export.cols.guardian"), (s) => guardianOf(s).full_name, 22), col(t("export.cols.guardianRelationship"), (s) => guardianOf(s).relationship, 14), col(t("export.cols.guardianPhone"), (s) => guardianOf(s).phone, 16),
+          col(t("export.cols.previousSchool"), (s) => s.previous_school, 24),
+        ],
+      });
+    } catch { setExportFailed(true); }
+    setExporting(false);
+  }
 
   return (
     <>
@@ -118,7 +164,9 @@ export default function StudentListPage() {
           {["active", "transferred_out", "withdrawn", "graduated"].map((k) => <option key={k} value={k}>{t(`students.statuses.${k}`)}</option>)}
         </select>
         {writer && <Link className="btn-small linkbtn" to={`/${lang}/students/new`}>{t("students.tabs.register")}</Link>}
+        <button type="button" className="btn-small secondary" disabled={exporting || total === 0} aria-busy={exporting} onClick={exportExcel}>{exporting ? t("export.working") : t("export.button")}</button>
       </div>
+      {exportFailed && <p className="flash error" role="alert">{t("export.failed")}</p>}
       {badId && <p className="flash warn" role="status">{t("students.list.badId")}</p>}
 
       {list.loading ? <Loading shape="table" rows={8} /> : list.error ? <LoadError /> : list.data.rows.length === 0 ? (
