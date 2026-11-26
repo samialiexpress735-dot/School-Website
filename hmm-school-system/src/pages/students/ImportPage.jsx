@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase.js";
 import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError } from "../../lib/ui.jsx";
 import { DEFAULT_AGE_LIMITS } from "../../lib/age.js";
-import { studentTemplateXlsx, resultsCsv, downloadText, downloadBlob, readImportFile, checkRow, nameKey } from "../../lib/importer.js";
+import { studentTemplateXlsx, templateCsv, resultsCsv, downloadText, downloadBlob, readImportFile, checkRow, nameKey } from "../../lib/importer.js";
 
 const CHUNK = 50;
 
@@ -118,6 +118,7 @@ export default function ImportPage() {
       <section className="panel">
         <h2>{t("import.step1")}</h2>
         <button type="button" className="btn-small secondary" onClick={downloadTemplate}>{t("import.download")}</button>
+        {" "}<button type="button" className="btn-small secondary" onClick={() => downloadText("student-import-template.csv", templateCsv())}>{t("import.downloadCsv")}</button>
         {templateError && <p className="flash error" role="alert">{t("import.templateFailed")}</p>}
       </section>
 

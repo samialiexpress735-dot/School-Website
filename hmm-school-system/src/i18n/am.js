@@ -436,7 +436,7 @@ export default {
     capacity: "አቅም {n}",
   },
   export: {
-    button: "Excel አውርድ", working: "በማዘጋጀት ላይ…", failed: "የ Excel ፋይሉን መፍጠር አልተቻለም። እባክዎ እንደገና ይሞክሩ።",
+    button: "Excel አውርድ", csv: "CSV አውርድ", working: "በማዘጋጀት ላይ…", failed: "የ Excel ፋይሉን መፍጠር አልተቻለም። እባክዎ እንደገና ይሞክሩ።",
     cols: {
       firstName: "ስም", fatherName: "የአባት ስም", grandfatherName: "የአያት ስም",
       firstNameAm: "ስም (በአማርኛ)", fatherNameAm: "የአባት ስም (በአማርኛ)", grandfatherNameAm: "የአያት ስም (በአማርኛ)",
@@ -451,6 +451,7 @@ export default {
     year: "ተማሪዎቹ የሚመደቡበት ዓመት",
     step1: "1. ቅጹን ያውርዱ",
     download: "የ Excel ቅጽ አውርድ",
+    downloadCsv: "የ CSV ቅጽ አውርድ (በማንኛውም ፕሮግራም ይከፈታል)",
     step2: "2. ይሙሉትና ይጫኑት",
     fileHelp: "የ Excel ቅጹን ይጠቀሙ፦ አንድ ረድፍ ለአንድ ተማሪ፣ የትውልድ ቀኑን በኢትዮጵያ አቆጣጠር dd/mm/yyyy ብለው ይጻፉ (ቅጹ ያንን አምድ አስቀድሞ እንደ ጽሑፍ ያስቀምጠዋል)። CSV እና .xlsx ፋይሎች ይቀበላሉ።",
     choose: "ፋይል ይምረጡ",

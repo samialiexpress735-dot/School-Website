@@ -71,3 +71,15 @@ test("Excel export keeps text cells and numbers, with a header row", async () =>
   assert.deepEqual(rows[1], ["Abebe", "0911223344", 9]);
   assert.deepEqual(rows[2], ["Meron", null, null]);
 });
+
+test("CSV templates and exports start with a BOM and import back through the same reader", async () => {
+  const { staffTemplateCsv } = await import("../src/lib/staffImporter.js");
+  const { buildExportCsv } = await import("../src/lib/exporter.js");
+  const { parseCsv, templateCsv } = await import("../src/lib/importer.js");
+  const staff = staffTemplateCsv();
+  assert.equal(staff.charCodeAt(0), 0xfeff);
+  assert.deepEqual(parseCsv(staff)[0], STAFF_COLUMNS);
+  assert.deepEqual(parseCsv(templateCsv())[0], TEMPLATE_COLUMNS);
+  const csv = buildExportCsv({ columns: [{ label: "Name", get: (r) => r.n }, { label: "Note", get: (r) => r.x }], rows: [{ n: "አበበ", x: 'say "hi", ok' }] });
+  assert.deepEqual(parseCsv(csv), [["Name", "Note"], ["አበበ", 'say "hi", ok']]);
+});

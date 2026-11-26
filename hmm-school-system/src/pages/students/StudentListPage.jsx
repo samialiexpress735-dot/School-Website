@@ -93,7 +93,7 @@ export default function StudentListPage() {
   };
 
   // every student that matches the toolbar filters (not just the 50 on this page), with the main guardian
-  async function exportExcel() {
+  async function exportFile(format) {
     setExporting(true); setExportFailed(false);
     try {
       const all = [];
@@ -129,7 +129,7 @@ export default function StudentListPage() {
           col(t("export.cols.guardian"), (s) => guardianOf(s).full_name, 22), col(t("export.cols.guardianRelationship"), (s) => guardianOf(s).relationship, 14), col(t("export.cols.guardianPhone"), (s) => guardianOf(s).phone, 16),
           col(t("export.cols.previousSchool"), (s) => s.previous_school, 24),
         ],
-      });
+      }, format);
     } catch { setExportFailed(true); }
     setExporting(false);
   }
@@ -164,7 +164,8 @@ export default function StudentListPage() {
           {["active", "transferred_out", "withdrawn", "graduated"].map((k) => <option key={k} value={k}>{t(`students.statuses.${k}`)}</option>)}
         </select>
         {writer && <Link className="btn-small linkbtn" to={`/${lang}/students/new`}>{t("students.tabs.register")}</Link>}
-        <button type="button" className="btn-small secondary" disabled={exporting || total === 0} aria-busy={exporting} onClick={exportExcel}>{exporting ? t("export.working") : t("export.button")}</button>
+        <button type="button" className="btn-small secondary" disabled={exporting || total === 0} aria-busy={exporting} onClick={() => exportFile("xlsx")}>{exporting ? t("export.working") : t("export.button")}</button>
+        <button type="button" className="btn-small secondary" disabled={exporting || total === 0} onClick={() => exportFile("csv")}>{t("export.csv")}</button>
       </div>
       {exportFailed && <p className="flash error" role="alert">{t("export.failed")}</p>}
       {badId && <p className="flash warn" role="status">{t("students.list.badId")}</p>}

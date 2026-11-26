@@ -2,6 +2,11 @@
 
 Newest first. "Run SQL" means paste the file into the Supabase SQL Editor and run it once.
 
+## Import update 3 – CSV downloads next to the Excel ones
+- Edited: `src/lib/importer.js`, `src/lib/staffImporter.js`, `src/lib/exporter.js`, `src/pages/students/ImportPage.jsx`, `src/pages/staff/StaffImportPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/staff/StaffListPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/importTemplate.test.js`, `docs/CHANGELOG.md`
+- Run SQL: none.
+- What changed: for computers with no Excel-compatible program, both import pages also offer a **CSV template**, and both lists offer **Download CSV** next to Download Excel. CSV has no dropdowns. Uploads accept CSV or .xlsx as before.
+
 ## Import update 2 – dropdowns and lists in the templates, Excel export of students and staff
 - Added: `src/lib/exporter.js`
 - Edited: `src/lib/importer.js`, `src/lib/staffImporter.js`, `src/pages/students/ImportPage.jsx`, `src/pages/staff/StaffImportPage.jsx`, `src/pages/students/StudentListPage.jsx`, `src/pages/staff/StaffListPage.jsx`, `src/i18n/en.js`, `src/i18n/am.js`, `tests/importTemplate.test.js`, `package.json`, `package-lock.json`, `docs/CHANGELOG.md`

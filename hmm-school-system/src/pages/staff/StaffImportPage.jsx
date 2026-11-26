@@ -5,7 +5,7 @@ import { useLang } from "../../i18n/index.jsx";
 import { useQuery, Loading, LoadError } from "../../lib/ui.jsx";
 import { can, STAFF_EDITORS } from "../../lib/roles.js";
 import { resultsCsv, downloadText, downloadBlob, readImportFile } from "../../lib/importer.js";
-import { staffTemplateXlsx, checkStaffRow, staffNameKey } from "../../lib/staffImporter.js";
+import { staffTemplateXlsx, staffTemplateCsv, checkStaffRow, staffNameKey } from "../../lib/staffImporter.js";
 
 const CHUNK = 50;
 
@@ -108,6 +108,7 @@ export default function StaffImportPage() {
       <section className="panel">
         <h2>{t("import.step1")}</h2>
         <button type="button" className="btn-small secondary" onClick={downloadTemplate}>{t("import.download")}</button>
+        {" "}<button type="button" className="btn-small secondary" onClick={() => downloadText("staff-import-template.csv", staffTemplateCsv())}>{t("import.downloadCsv")}</button>
         {templateError && <p className="flash error" role="alert">{t("import.templateFailed")}</p>}
       </section>
 

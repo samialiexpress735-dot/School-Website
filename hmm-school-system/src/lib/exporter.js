@@ -1,4 +1,4 @@
-import { downloadBlob } from "./importer.js";
+import { downloadBlob, csvCell } from "./importer.js";
 
 const HEAD = { fontWeight: "bold", backgroundColor: "#DCE6F2", wrap: true };
 
@@ -15,6 +15,14 @@ export async function buildExportXlsx({ sheetName, columns, rows }) {
   return writeXlsxFile([{ data, sheet: sheetName, columns: columns.map((c) => ({ width: c.width || 16 })), stickyRowsCount: 1 }]).toBlob();
 }
 
-export async function downloadExport(filename, spec) {
-  downloadBlob(`${filename}-${new Date().toISOString().slice(0, 10)}.xlsx`, await buildExportXlsx(spec));
+export function buildExportCsv({ columns, rows }) {
+  const lines = [columns.map((c) => csvCell(c.label)).join(","), ...rows.map((r) => columns.map((c) => csvCell(c.get(r))).join(","))];
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
+
+// format: "xlsx" (default) or "csv"
+export async function downloadExport(filename, spec, format = "xlsx") {
+  const day = new Date().toISOString().slice(0, 10);
+  if (format === "csv") downloadBlob(`${filename}-${day}.csv`, new Blob([buildExportCsv(spec)], { type: "text/csv;charset=utf-8" }));
+  else downloadBlob(`${filename}-${day}.xlsx`, await buildExportXlsx(spec));
 }

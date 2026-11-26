@@ -35,7 +35,7 @@ export default function StaffListPage() {
   });
 
   // the Excel file holds exactly the people in the current list (search and filters applied)
-  async function exportExcel() {
+  async function exportFile(format) {
     setExporting(true); setExportFailed(false);
     const col = (label, get, width) => ({ label: t(label), get, width });
     try {
@@ -53,7 +53,7 @@ export default function StaffListPage() {
           col("staff.department", (s) => pick(s.departments, lang), 22), col("staff.qualification", (s) => s.qualification), col("staff.fieldOfStudy", (s) => s.field_of_study, 20),
           col("staff.hireDate", (s) => s.hire_date, 14), col("staff.status", (s) => t(`staff.statuses.${s.employment_status}`), 14),
         ],
-      });
+      }, format);
     } catch { setExportFailed(true); }
     setExporting(false);
   }
@@ -71,7 +71,8 @@ export default function StaffListPage() {
           {["active", "on_leave", "transferred", "resigned", "retired"].map((k) => <option key={k} value={k}>{t(`staff.statuses.${k}`)}</option>)}
         </select>
         {editable && <Link className="btn-small linkbtn" to={`/${lang}/staff/new`}>{t("staff.add")}</Link>}
-        <button type="button" className="btn-small secondary" disabled={exporting || rows.length === 0} aria-busy={exporting} onClick={exportExcel}>{exporting ? t("export.working") : t("export.button")}</button>
+        <button type="button" className="btn-small secondary" disabled={exporting || rows.length === 0} aria-busy={exporting} onClick={() => exportFile("xlsx")}>{exporting ? t("export.working") : t("export.button")}</button>
+        <button type="button" className="btn-small secondary" disabled={exporting || rows.length === 0} onClick={() => exportFile("csv")}>{t("export.csv")}</button>
       </div>
       {exportFailed && <p className="flash error" role="alert">{t("export.failed")}</p>}
 

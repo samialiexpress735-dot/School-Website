@@ -22,7 +22,7 @@ export const TEMPLATE_EXAMPLE = {
   grade: "9", stream: "", shift: "morning", section: "A", enrollment_status: "new",
 };
 
-const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+export const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 // The file starts with a byte-order mark so Excel opens Amharic text correctly.
 export function templateCsv() {

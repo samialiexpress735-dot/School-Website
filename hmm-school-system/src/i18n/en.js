@@ -436,7 +436,7 @@ export default {
     capacity: "Capacity {n}",
   },
   export: {
-    button: "Download Excel", working: "Preparing…", failed: "The Excel file could not be created. Please try again.",
+    button: "Download Excel", csv: "Download CSV", working: "Preparing…", failed: "The Excel file could not be created. Please try again.",
     cols: {
       firstName: "First name", fatherName: "Father's name", grandfatherName: "Grandfather's name",
       firstNameAm: "First name (Amharic)", fatherNameAm: "Father's name (Amharic)", grandfatherNameAm: "Grandfather's name (Amharic)",
@@ -451,6 +451,7 @@ export default {
     year: "Enroll the students in",
     step1: "1. Download the template",
     download: "Download Excel template",
+    downloadCsv: "Download CSV template (opens in any program)",
     step2: "2. Fill it in and upload it",
     fileHelp: "Use the Excel template: one row per student, and write the date of birth in the Ethiopian calendar as dd/mm/yyyy (the template already keeps that column as text). CSV and .xlsx files are accepted.",
     choose: "Choose a file",

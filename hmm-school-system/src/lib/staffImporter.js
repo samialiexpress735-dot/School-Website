@@ -1,4 +1,4 @@
-import { buildTemplateXlsx, normSex, normPhone } from "./importer.js";
+import { buildTemplateXlsx, csvCell, normSex, normPhone } from "./importer.js";
 
 // Columns of the staff import template, in order. Dates are written yyyy-mm-dd (the same calendar the staff form uses).
 export const STAFF_COLUMNS = [
@@ -36,6 +36,11 @@ const STAFF_HELP = {
   hire_date: ["No", "yyyy-mm-dd. A real Excel date also works."],
   employment_status: ["No", "active, on_leave, transferred, resigned or retired. Empty means active."],
 };
+
+// Same template as a plain CSV file (opens in Notepad, Google Sheets, WPS, Excel); starts with a byte-order mark for Amharic text.
+export function staffTemplateCsv() {
+  return `\uFEFF${STAFF_COLUMNS.join(",")}\r\n${STAFF_COLUMNS.map((c) => csvCell(STAFF_EXAMPLE[c])).join(",")}\r\n`;
+}
 
 // departments (optional): [{ name }] from the database. With them, the template gets a Department dropdown and a Lists sheet.
 export const staffTemplateXlsx = (departments = []) => buildTemplateXlsx({
